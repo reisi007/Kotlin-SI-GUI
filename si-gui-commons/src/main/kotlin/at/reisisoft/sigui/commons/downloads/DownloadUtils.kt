@@ -14,6 +14,7 @@ enum class DownloadLocation {
 internal object DownloadUrls {
     const val ARCHIVE = "https://downloadarchive.documentfoundation.org/libreoffice/old/"
     const val DAILY = "https://dev-builds.libreoffice.org/daily/"
+    const val STABLE = "http://download.documentfoundation.org/libreoffice/stable/"
 }
 
 data class DownloadInformation(

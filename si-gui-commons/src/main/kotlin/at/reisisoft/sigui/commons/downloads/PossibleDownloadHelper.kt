@@ -10,7 +10,8 @@ import org.jsoup.nodes.Document
 import java.net.SocketTimeoutException
 import java.net.URL
 import java.util.*
-import kotlin.collections.HashSet
+import kotlin.Comparator
+import kotlin.collections.ArrayList
 
 object PossibleDownloadHelper {
 
@@ -18,17 +19,19 @@ object PossibleDownloadHelper {
         downloadLocation: DownloadLocation,
         vararg downloadTypes: DownloadType
     ): SortedSet<DownloadInformation> =
-        if (downloadLocation == DownloadLocation.DAILY)
-            possibleDailyDownloads(setOf(*downloadTypes))
-        else
+        if (downloadLocation == DownloadLocation.ARCHIVE)
             downloadTypes.stream().flatMap { downloadType ->
-                when (downloadLocation) {
-                    DownloadLocation.ARCHIVE -> possibleArchive(downloadType)
-                    DownloadLocation.STABLE -> possibleReleaseVersion(ReleaseType.STABLE)
-                    DownloadLocation.FRESH -> possibleReleaseVersion(ReleaseType.FRESH)
-                    else -> throw IllegalStateException("Unexpected location $downloadLocation")
-                }.stream()
+                possibleArchive(downloadType).stream()
             }.toSortedSet()
+        else
+            setOf(*downloadTypes).let {
+                when (downloadLocation) {
+                    DownloadLocation.DAILY -> possibleDailyDownloads(it)
+                    DownloadLocation.STABLE -> possibleReleaseVersion(ReleaseType.STABLE, it)
+                    DownloadLocation.FRESH -> possibleReleaseVersion(ReleaseType.FRESH, it)
+                    else -> throw IllegalStateException("Unexpected location $downloadLocation")
+                }
+            }
 
     private const val firstDesktopArchiveVersion = "3.3.0.4/"
     private const val lastDesktopArchiveVersion = "latest/"
@@ -44,11 +47,11 @@ object PossibleDownloadHelper {
                     if (firstVersionSeen) {
                         possibleVersionInformation.substring(0, possibleVersionInformation.length - 1)
                             .let { versionInfo ->
-                                downloadVersionInfo.add(
-                                    DownloadInformation(
-                                        "${baseUrlDocument.location()}$possibleVersionInformation",
+                                downloadVersionInfo.addAll(
+                                    getCorrectBaseUrlForOS(
+                                        baseUrlDocument.location(),
                                         versionInfo,
-                                        HashSet<DownloadType>().apply {
+                                        ArrayList<DownloadType>().apply {
                                             //Add Support information
                                             if (versionInfo < "3.5")
                                                 add(DownloadType.WINDOWSEXE)
@@ -57,8 +60,17 @@ object PossibleDownloadHelper {
 
                                             if (versionInfo >= "4.4.3.2")
                                                 add(DownloadType.WINDOWS64)
-                                        }
-                                    )
+
+                                            //Add all elements which have always been available
+                                            addAll(
+                                                arrayOf(
+                                                    DownloadType.LINUX_DEB_64,
+                                                    DownloadType.LINUX_DEB_32,
+                                                    DownloadType.LINUX_RPM_64,
+                                                    DownloadType.LINUX_RPM_32
+                                                )
+                                            )
+                                        })
                                 )
                             }
                         if (possibleVersionInformation == lastDesktopArchiveVersion)
@@ -100,9 +112,65 @@ object PossibleDownloadHelper {
 
     private enum class ReleaseType { STABLE, FRESH }
 
-    private fun possibleReleaseVersion(release: ReleaseType): SortedSet<DownloadInformation> {
-        TODO("Not implemented")
+    private fun possibleReleaseVersion(
+        release: ReleaseType,
+        downloadTypes: Set<DownloadType>
+    ): SortedSet<DownloadInformation> {
+        //Maximum is what we want. Not the quickest solution, but we have < 10 [most likely 2-4] entries
+        val versionComperator: Comparator<String> = if (release == ReleaseType.FRESH) {
+            Comparator.naturalOrder()
+        } else Comparator { thiz, other ->
+            val thizLastIndex = thiz.lastIndexOf('.')
+            val thizIntVal = thiz.substring(0, thizLastIndex)
+            val otherLastIndex = other.lastIndexOf('.')
+            val otherIntVal = other.substring(0, otherLastIndex)
+
+            thizIntVal.compareTo(otherIntVal).let {
+                if (it != 0)
+                    return@let -it //5.1 is greater than 5.2
+                else {
+                    val thizSecondPart = thiz.substring(thizLastIndex)
+                    val otherSecondPart = other.substring(otherLastIndex)
+                    return@let thizSecondPart.compareTo(otherSecondPart) // 5.2.4 is greater than 5.2.3
+                }
+            }
+        }
+
+        return parseHtmlDocument(DownloadUrls.STABLE).let { rootDocument ->
+            rootDocument.select("table a[href~=.]").stream()
+                .map { it.attr("href") }
+                .filter { !it.startsWith('/') && it.endsWith('/') }
+                .max(versionComperator)
+                .orElseThrow { throw IllegalStateException("Unable to find $release!") }.let { urlFragment ->
+                    getCorrectBaseUrlForOS(
+                        "${rootDocument.location()}$urlFragment",
+                        "LibreOffice $release",
+                        downloadTypes
+                    )
+                }
+        }
     }
+
+    private const val bit32 = "x86"
+    private const val bit64 = "x86_64"
+    private fun getCorrectBaseUrlForOS(
+        baseUrlWithoutOS: String,
+        displayName: String,
+        downloadTypes: Collection<DownloadType>
+    ): SortedSet<DownloadInformation> = downloadTypes.stream().map {
+        setOf(it) to when (it) {
+            DownloadType.LINUX_DEB_64 -> "deb/$bit64/"
+            DownloadType.LINUX_RPM_64 -> "rpm/$bit64/"
+            DownloadType.LINUX_DEB_32 -> "deb/$bit32/"
+            DownloadType.LINUX_RPM_32 -> "rpm/$bit32/"
+            DownloadType.MAC -> "mac/$bit64/"
+            DownloadType.WINDOWS32, DownloadType.WINDOWSEXE -> "win/$bit32/"
+            DownloadType.WINDOWS64 -> "win/$bit64/"
+            else -> ""
+        }
+    }.map { (downloadType, urlFragment) ->
+        DownloadInformation("$baseUrlWithoutOS$urlFragment", displayName, downloadType)
+    }.toSortedSet()
 
     private fun possibleDailyDownloads(wantedDailyBuilds: Set<DownloadType>): SortedSet<DownloadInformation> =
         parseHtmlDocument(DownloadUrls.DAILY).let { rootDocument ->
@@ -142,8 +210,6 @@ object PossibleDownloadHelper {
                                                 .let { downloadableElements ->
                                                     return@filter downloadableElements.isNotEmpty()
                                                 }
-
-
                                         } catch (e: HttpStatusException) {
                                             if (e.statusCode !in 200..299)
                                                 return@filter false

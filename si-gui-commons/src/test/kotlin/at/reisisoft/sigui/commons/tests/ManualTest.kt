@@ -1,7 +1,6 @@
 package at.reisisoft.sigui.commons.tests;
 
-import at.reisisoft.sigui.commons.downloads.DownloadLocation.ARCHIVE
-import at.reisisoft.sigui.commons.downloads.DownloadLocation.DAILY
+import at.reisisoft.sigui.commons.downloads.DownloadLocation.*
 import at.reisisoft.sigui.commons.downloads.DownloadType.*
 import at.reisisoft.sigui.commons.downloads.PossibleDownloadHelper
 import kotlin.test.Test
@@ -23,5 +22,13 @@ class ManualTest {
     @Test
     fun dailyBuilds() =
         PossibleDownloadHelper.fetchPossibleFor(DAILY, WINDOWS64, WINDOWS32, LINUX_DEB_64).forEach(System.out::println)
+
+    @Test
+    fun fresh() =
+        PossibleDownloadHelper.fetchPossibleFor(FRESH, WINDOWS64, WINDOWS32, LINUX_DEB_64).forEach(System.out::println)
+
+    @Test
+    fun stable() =
+        PossibleDownloadHelper.fetchPossibleFor(STABLE, WINDOWS64, WINDOWS32, LINUX_DEB_64).forEach(System.out::println)
 
 }
