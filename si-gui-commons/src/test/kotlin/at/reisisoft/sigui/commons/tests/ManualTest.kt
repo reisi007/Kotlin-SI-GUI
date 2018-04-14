@@ -22,6 +22,6 @@ class ManualTest {
 
     @Test
     fun dailyBuilds() =
-        PossibleDownloadHelper.fetchPossibleFor(DAILY, WINDOWS32).forEach(System.out::println)
+        PossibleDownloadHelper.fetchPossibleFor(DAILY, WINDOWS64, WINDOWS32, LINUX_DEB_64).forEach(System.out::println)
 
 }

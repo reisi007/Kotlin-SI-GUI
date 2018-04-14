@@ -1,10 +1,13 @@
 package at.reisisoft.sigui.commons.downloads
 
+import at.reisisoft.checkpoint
 import at.reisisoft.stream
 import at.reisisoft.toSortedSet
+import org.jsoup.Connection
 import org.jsoup.HttpStatusException
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.io.IOException
 import java.net.URL
 import java.util.*
 import kotlin.collections.HashSet
@@ -14,14 +17,18 @@ object PossibleDownloadHelper {
     fun fetchPossibleFor(
         downloadLocation: DownloadLocation,
         vararg downloadTypes: DownloadType
-    ): SortedSet<DownloadInformation> = downloadTypes.stream().flatMap { downloadType ->
-        when (downloadLocation) {
-            DownloadLocation.DAILY -> possibleDailyDownloads()
-            DownloadLocation.ARCHIVE -> possibleArchive(downloadType)
-            DownloadLocation.STABLE -> possibleReleaseVersion(ReleaseType.STABLE)
-            DownloadLocation.FRESH -> possibleReleaseVersion(ReleaseType.FRESH)
-        }.stream()
-    }.toSortedSet()
+    ): SortedSet<DownloadInformation> =
+        if (downloadLocation == DownloadLocation.DAILY)
+            possibleDailyDownloads(setOf(*downloadTypes))
+        else
+            downloadTypes.stream().flatMap { downloadType ->
+                when (downloadLocation) {
+                    DownloadLocation.ARCHIVE -> possibleArchive(downloadType)
+                    DownloadLocation.STABLE -> possibleReleaseVersion(ReleaseType.STABLE)
+                    DownloadLocation.FRESH -> possibleReleaseVersion(ReleaseType.FRESH)
+                    else -> throw IllegalStateException("Unexpected location $downloadLocation")
+                }.stream()
+            }.toSortedSet()
 
     private const val firstDesktopArchiveVersion = "3.3.0.4/"
     private const val lastDesktopArchiveVersion = "latest/"
@@ -97,48 +104,53 @@ object PossibleDownloadHelper {
         TODO("Not implemented")
     }
 
-    private fun possibleDailyDownloads(): SortedSet<DownloadInformation> =
+    private fun possibleDailyDownloads(wantedDailyBuilds: Set<DownloadType>): SortedSet<DownloadInformation> =
         parseHtmlDocument(DownloadUrls.DAILY).let { rootDocument ->
             rootDocument.select("a[href]").let { aElements ->
                 Regex("(master|libreoffice.*?)/").let { firstLevelRegex ->
-                    aElements.stream().map { it.attr("href") }.filter { firstLevelRegex.matches(it) }
-                        .flatMap { branchName ->
-                            //Build new URL
+                    aElements.stream().parallel().map { it.attr("href") }.filter { firstLevelRegex.matches(it) }
+                        .map { branchName ->
                             val level2URL = "${rootDocument.location()}$branchName"
-                            parseHtmlDocument(level2URL).let { level2Document ->
-                                level2Document.select("a[href~=@]").let { thinderboxNames ->
-                                    thinderboxNames.stream().map { it.attr("href") }.map { thinderboxName ->
-                                        DownloadInformation(
-                                            level2URL + thinderboxName + "current/",
-                                            "${branchName.substring(
-                                                0,
-                                                branchName.length - 1
-                                            )}-${thinderboxName.substring(
-                                                0,
-                                                thinderboxName.length - 1
-                                            )}", getDownloadTypeFromThinderboxName(thinderboxName)
+                            branchName to parseHtmlDocument(level2URL)
+                        }.checkpoint(false)
+                        .flatMap { (branchName, level2Document) ->
+                            //Build new URL
+                            level2Document.select("a[href~=@]").let { thinderboxNames ->
+                                thinderboxNames.stream().parallel().map { it.attr("href") }.map { thinderboxName ->
+                                    DownloadInformation(
+                                        level2Document.location() + "current/",
+                                        "${branchName.substring(
+                                            0,
+                                            branchName.length - 1
+                                        )}-${thinderboxName.substring(
+                                            0,
+                                            thinderboxName.length - 1
+                                        )}", getDownloadTypeFromThinderboxName(thinderboxName)
 
-                                        )
-                                    }.filter { !it.supportedDownloadTypes.contains(DownloadType.UNKNOWN) }
-                                        //We now know every possible Thinderbox location. Now check if the Thinderbox is useful.
-                                        .filter { dlInfo ->
-                                            try {
-                                                Jsoup.connect(dlInfo.baseUrl).timeout(CONNECTION_TIMEOUT)
-                                                    .execute().let letResponse@{ response ->
-
-                                                        Jsoup.parse(response.body()).select("a[href~=.]")
-                                                            .let { downloadableElements ->
-                                                                return@letResponse downloadableElements.isNotEmpty()
-                                                            }
-
-                                                    }
-                                            } catch (e: HttpStatusException) {
-                                                if (e.statusCode !in 200..299)
-                                                    return@filter false
-                                                throw e
-                                            }
+                                    )
+                                }.filter {
+                                    it.supportedDownloadTypes.let { supportedTypes ->
+                                        !supportedTypes.contains(DownloadType.UNKNOWN) && supportedTypes.any { supportedType ->
+                                            wantedDailyBuilds.contains(supportedType)
                                         }
+                                    }
                                 }
+                                    //We now know every possible Thinderbox location. Now check if the Thinderbox is useful.
+                                    .filter { dlInfo ->
+                                        try {
+                                            parseHtmlDocument(dlInfo.baseUrl).select("a[href~=.]")
+                                                .let { downloadableElements ->
+                                                    return@filter downloadableElements.isNotEmpty()
+                                                }
+
+
+                                        } catch (e: HttpStatusException) {
+                                            if (e.statusCode !in 200..299)
+                                                return@filter false
+                                            throw e
+                                        }
+
+                                    }
                             }
                         }.toSortedSet()
                 }
@@ -148,29 +160,63 @@ object PossibleDownloadHelper {
     /**
      * Only Windows and Android are supported
      */
-    private fun getDownloadTypeFromThinderboxName(thinderboxName: String): Set<DownloadType> = setOf(
+    private fun getDownloadTypeFromThinderboxName(thinderboxName: String): Set<DownloadType> =
         when {
             thinderboxName.contains(
                 "win",
                 true
-            ) -> if (thinderboxName.contains("x86_64")) DownloadType.WINDOWS64 else DownloadType.WINDOWS32
-            thinderboxName.contains("android", true) -> when {
-                thinderboxName.contains("x86") -> DownloadType.ANDROID_LIBREOFFICE_X86
-                else -> DownloadType.ANDROID_LIBREOFFICE_ARM
-            //No remote master
+            ) -> setOf(if (thinderboxName.contains("x86_64")) DownloadType.WINDOWS64 else DownloadType.WINDOWS32)
+
+            thinderboxName.contains("android", true) -> setOf(
+                when {
+                    thinderboxName.contains("x86") -> DownloadType.ANDROID_LIBREOFFICE_X86
+                    else -> DownloadType.ANDROID_LIBREOFFICE_ARM
+                //No remote master
+                }
+            )
+
+            thinderboxName.contains("macos", true) -> setOf(DownloadType.MAC)
+
+            thinderboxName.contains("linux", true) -> {
+                val rpm = thinderboxName.contains("rpm", true)
+                val deb = thinderboxName.contains("deb", true)
+                val x64bit = thinderboxName.contains("x86_64")
+                if (x64bit)
+                    TreeSet<DownloadType>().apply {
+                        if (rpm)
+                            add(DownloadType.LINUX_RPM_64)
+                        if (deb)
+                            add(DownloadType.LINUX_DEB_64)
+                    }
+                else TreeSet<DownloadType>().apply {
+                    if (rpm)
+                        add(DownloadType.LINUX_RPM_32)
+                    if (deb)
+                        add(DownloadType.LINUX_DEB_32)
+                }
             }
             else -> {
                 println("Cannot infer downloadtype for: $thinderboxName")
-                DownloadType.UNKNOWN
+                setOf(DownloadType.UNKNOWN)
             }
         }
-    )
+
 
     private fun parseHtmlDocument(urlAsString: String): Document =
-        URL(urlAsString).let { url ->
-            Jsoup.parse(url, CONNECTION_TIMEOUT)
+        try {
+            URL(urlAsString).let { url ->
+                getJsoupResponse(urlAsString).parse()
+            }
+        } catch (e: IOException) {
+            System.err.println("Exception for $urlAsString")
+            System.err.println()
+            throw e
         }
 
-    private const val CONNECTION_TIMEOUT = 5000/*5 seconds*/
+    private fun getJsoupResponse(urlAsString: String): Connection.Response =
+        Jsoup.connect(urlAsString).timeout(CONNECTION_TIMEOUT).execute()
+
+
+    private const val CONNECTION_TIMEOUT = 2000/*2 seconds*/
 
 }
