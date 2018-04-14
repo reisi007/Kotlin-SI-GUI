@@ -1,18 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ChoiceBox?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.Pane?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.MainUIController">
-    <children>
-        <Pane layoutX="14.0" layoutY="14.0" prefHeight="110.0" prefWidth="361.0">
-            <children>
-                <ChoiceBox fx:id="listOfDownlaods" layoutX="10.0" layoutY="11.0" prefWidth="150.0"/>
-                <Button fx:id="mainStartDl" layoutX="181.0" layoutY="11.0" mnemonicParsing="false"
-                        onAction="#updateListOfDownloadVersions" text="Button"/>
-            </children>
-        </Pane>
-    </children>
+    <VBox prefHeight="400.0" prefWidth="600.0" spacing="7.0">
+        <HBox fillHeight="false">
+            <MenuBar fx:id="menuBar" focusTraversable="true" HBox.hgrow="ALWAYS">
+                <Menu text="Help">
+                    <MenuItem fx:id="manual" text="Online Manual"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem fx:id="about" text="About"/>
+                </Menu>
+            </MenuBar>
+        </HBox>
+        <HBox fillHeight="false" spacing="7.0">
+            <VBox prefHeight="200.0" prefWidth="182.0" spacing="7.0">
+                <Accordion fx:id="downloadAccordion" maxHeight="75.0" maxWidth="250.0" prefWidth="250.0"/>
+                <Button fx:id="mainStartDl" mnemonicParsing="false" onAction="#updateListOfDownloadVersions"
+                        text="%downloadlist.update"/>
+                <padding>
+                    <Insets left="7.0" right="7.0"/>
+                </padding>
+            </VBox>
+            <VBox>
+
+            </VBox>
+        </HBox>
+    </VBox>
 </AnchorPane>

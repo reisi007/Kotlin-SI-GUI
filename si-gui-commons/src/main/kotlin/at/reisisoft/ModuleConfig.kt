@@ -1,5 +1,6 @@
 package at.reisisoft;
 
+import java.nio.file.Path
 import java.util.*
 import java.util.stream.Collectors
 import java.util.stream.Stream
@@ -16,3 +17,5 @@ fun <T> Stream<T>.toList(): List<T> = collect(Collectors.toList())
 
 fun <T> Stream<T>.checkpoint(continueParallel: Boolean = isParallel) =
     collect(Collectors.toList()).let { if (continueParallel) it.parallelStream() else it.stream() }
+
+infix fun Path.withChild(child: String): Path = resolve(child)

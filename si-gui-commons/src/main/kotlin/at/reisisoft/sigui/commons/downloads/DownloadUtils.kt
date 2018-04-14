@@ -8,7 +8,7 @@ enum class DownloadType {
 
 
 enum class DownloadLocation {
-    ARCHIVE, DAILY, FRESH, STABLE
+    ARCHIVE, DAILY, STABLE
 }
 
 internal object DownloadUrls {

@@ -8,7 +8,6 @@ import org.jsoup.HttpStatusException
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.SocketTimeoutException
-import java.net.URL
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.ArrayList
@@ -16,22 +15,22 @@ import kotlin.collections.ArrayList
 object PossibleDownloadHelper {
 
     fun fetchPossibleFor(
-        downloadLocation: DownloadLocation,
-        vararg downloadTypes: DownloadType
+        downloadLocations: Array<DownloadLocation>,
+        downloadTypes: Array<DownloadType>
     ): SortedSet<DownloadInformation> =
-        if (downloadLocation == DownloadLocation.ARCHIVE)
-            downloadTypes.stream().flatMap { downloadType ->
-                possibleArchive(downloadType).stream()
-            }.toSortedSet()
-        else
-            setOf(*downloadTypes).let {
+        setOf(*downloadTypes).let {
+            downloadLocations.stream().flatMap { downloadLocation ->
                 when (downloadLocation) {
                     DownloadLocation.DAILY -> possibleDailyDownloads(it)
-                    DownloadLocation.STABLE -> possibleReleaseVersion(ReleaseType.STABLE, it)
-                    DownloadLocation.FRESH -> possibleReleaseVersion(ReleaseType.FRESH, it)
+                    DownloadLocation.STABLE -> possibleReleaseVersion(
+                        setOf(ReleaseType.STABLE, ReleaseType.FRESH),
+                        it
+                    )
+                    DownloadLocation.ARCHIVE -> possibleArchive(it)
                     else -> throw IllegalStateException("Unexpected location $downloadLocation")
-                }
-            }
+                }.stream()
+            }.toSortedSet()
+        }
 
     private const val firstDesktopArchiveVersion = "3.3.0.4/"
     private const val lastDesktopArchiveVersion = "latest/"
@@ -82,21 +81,19 @@ object PossibleDownloadHelper {
         }
 
 
-    private fun possibleArchive(downloadType: DownloadType): SortedSet<DownloadInformation> =
+    private fun possibleArchive(downloadTypes: Set<DownloadType>): SortedSet<DownloadInformation> =
         parseHtmlDocument(DownloadUrls.ARCHIVE).let { rootDocument ->
-            return when (downloadType) {
-                DownloadType.ANDROID_LIBREOFFICE_ARM, DownloadType.ANDROID_LIBREOFFICE_X86 -> possibleArchiveAndroid(
-                    downloadType,
-                    "loviewer",
-                    rootDocument
-                )
-                DownloadType.ANDROID_REMOTE -> possibleArchiveAndroid(downloadType, "sdremote", rootDocument)
-                else -> possibleArchiveDesktop(rootDocument)
-            }
+            val downloads = TreeSet<DownloadInformation>()
+            if (downloadTypes.contains(DownloadType.ANDROID_LIBREOFFICE_ARM) || downloadTypes.contains(DownloadType.ANDROID_LIBREOFFICE_X86))
+                downloads += possibleArchiveAndroid("loviewer", rootDocument)
+            if (downloadTypes.contains(DownloadType.ANDROID_REMOTE))
+                downloads += possibleArchiveAndroid("sdremote", rootDocument)
+            downloads += possibleArchiveDesktop(rootDocument)
+            return@let downloads
         }
 
+
     private fun possibleArchiveAndroid(
-        downloadType: DownloadType,
         folderContainsString: String,
         baseUrlDocument: Document
     ): SortedSet<DownloadInformation> = baseUrlDocument.select("a[href~=$folderContainsString]").let {
@@ -104,7 +101,8 @@ object PossibleDownloadHelper {
             it.attr("href").let {
                 DownloadInformation(
                     "${baseUrlDocument.location()}$it",
-                    it.substring(0, it.length - 1), mutableSetOf(downloadType)
+                    it.substring(0, it.length - 1),
+                    setOf(DownloadType.ANDROID_LIBREOFFICE_X86, DownloadType.ANDROID_LIBREOFFICE_ARM)
                 )
             }
         }.toSortedSet()
@@ -113,30 +111,31 @@ object PossibleDownloadHelper {
     private enum class ReleaseType { STABLE, FRESH }
 
     private fun possibleReleaseVersion(
-        release: ReleaseType,
+        releases: Collection<ReleaseType>,
         downloadTypes: Set<DownloadType>
-    ): SortedSet<DownloadInformation> {
-        //Maximum is what we want. Not the quickest solution, but we have < 10 [most likely 2-4] entries
-        val versionComperator: Comparator<String> = if (release == ReleaseType.FRESH) {
-            Comparator.naturalOrder()
-        } else Comparator { thiz, other ->
-            val thizLastIndex = thiz.lastIndexOf('.')
-            val thizIntVal = thiz.substring(0, thizLastIndex)
-            val otherLastIndex = other.lastIndexOf('.')
-            val otherIntVal = other.substring(0, otherLastIndex)
+    ): SortedSet<DownloadInformation> = parseHtmlDocument(DownloadUrls.STABLE).let { rootDocument ->
+        releases.stream().flatMap { release ->
+            //Maximum is what we want. Not the quickest solution, but we have < 10 [most likely 2-4] entries
+            val versionComperator: Comparator<String> =
+                if (release == ReleaseType.FRESH)
+                    Comparator.naturalOrder()
+                else Comparator { thiz, other ->
+                    val thizLastIndex = thiz.lastIndexOf('.')
+                    val thizIntVal = thiz.substring(0, thizLastIndex)
+                    val otherLastIndex = other.lastIndexOf('.')
+                    val otherIntVal = other.substring(0, otherLastIndex)
 
-            thizIntVal.compareTo(otherIntVal).let {
-                if (it != 0)
-                    return@let -it //5.1 is greater than 5.2
-                else {
-                    val thizSecondPart = thiz.substring(thizLastIndex)
-                    val otherSecondPart = other.substring(otherLastIndex)
-                    return@let thizSecondPart.compareTo(otherSecondPart) // 5.2.4 is greater than 5.2.3
+                    thizIntVal.compareTo(otherIntVal).let comparing@{
+                        if (it != 0)
+                            return@comparing -it //5.1 is greater than 5.2
+                        else {
+                            val thizSecondPart = thiz.substring(thizLastIndex)
+                            val otherSecondPart = other.substring(otherLastIndex)
+                            return@comparing thizSecondPart.compareTo(otherSecondPart) // 5.2.4 is greater than 5.2.3
+                        }
+                    }
                 }
-            }
-        }
 
-        return parseHtmlDocument(DownloadUrls.STABLE).let { rootDocument ->
             rootDocument.select("table a[href~=.]").stream()
                 .map { it.attr("href") }
                 .filter { !it.startsWith('/') && it.endsWith('/') }
@@ -146,10 +145,11 @@ object PossibleDownloadHelper {
                         "${rootDocument.location()}$urlFragment",
                         "LibreOffice $release",
                         downloadTypes
-                    )
+                    ).stream()
                 }
-        }
+        }.toSortedSet()
     }
+
 
     private const val bit32 = "x86"
     private const val bit64 = "x86_64"
@@ -268,10 +268,7 @@ object PossibleDownloadHelper {
         }
 
 
-    private fun parseHtmlDocument(urlAsString: String): Document =
-        URL(urlAsString).let { url ->
-            getJsoupResponse(urlAsString).parse()
-        }
+    private fun parseHtmlDocument(urlAsString: String): Document = getJsoupResponse(urlAsString).parse()
 
 
     private fun getJsoupResponse(urlAsString: String): Connection.Response =
@@ -283,6 +280,6 @@ object PossibleDownloadHelper {
             throw ste
         }
 
-    private const val CONNECTION_TIMEOUT = 2000/*2 seconds*/
+    private const val CONNECTION_TIMEOUT = 5000/*5 seconds*/
 
 }
