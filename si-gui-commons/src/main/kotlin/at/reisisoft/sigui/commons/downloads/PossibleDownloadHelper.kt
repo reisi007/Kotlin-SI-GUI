@@ -7,7 +7,7 @@ import org.jsoup.Connection
 import org.jsoup.HttpStatusException
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import java.io.IOException
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.util.*
 import kotlin.collections.HashSet
@@ -118,7 +118,7 @@ object PossibleDownloadHelper {
                             level2Document.select("a[href~=@]").let { thinderboxNames ->
                                 thinderboxNames.stream().parallel().map { it.attr("href") }.map { thinderboxName ->
                                     DownloadInformation(
-                                        level2Document.location() + "current/",
+                                        level2Document.location() + thinderboxName + "current/",
                                         "${branchName.substring(
                                             0,
                                             branchName.length - 1
@@ -203,19 +203,19 @@ object PossibleDownloadHelper {
 
 
     private fun parseHtmlDocument(urlAsString: String): Document =
-        try {
-            URL(urlAsString).let { url ->
-                getJsoupResponse(urlAsString).parse()
-            }
-        } catch (e: IOException) {
-            System.err.println("Exception for $urlAsString")
-            System.err.println()
-            throw e
+        URL(urlAsString).let { url ->
+            getJsoupResponse(urlAsString).parse()
         }
 
-    private fun getJsoupResponse(urlAsString: String): Connection.Response =
-        Jsoup.connect(urlAsString).timeout(CONNECTION_TIMEOUT).execute()
 
+    private fun getJsoupResponse(urlAsString: String): Connection.Response =
+        try {
+            Jsoup.connect(urlAsString).timeout(CONNECTION_TIMEOUT).execute()
+        } catch (ste: SocketTimeoutException) {
+            System.err.println("Exception for $urlAsString")
+            System.err.println()
+            throw ste
+        }
 
     private const val CONNECTION_TIMEOUT = 2000/*2 seconds*/
 
