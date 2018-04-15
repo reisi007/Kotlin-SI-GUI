@@ -18,4 +18,6 @@ fun <T> Stream<T>.toList(): List<T> = collect(Collectors.toList())
 fun <T> Stream<T>.checkpoint(continueParallel: Boolean = isParallel) =
     collect(Collectors.toList()).let { if (continueParallel) it.parallelStream() else it.stream() }
 
+fun <K, V> Stream<Pair<K, V>>.toMap(): Map<K, V> = collect(Collectors.toMap(Pair<K, V>::first, Pair<K, V>::second))
+
 infix fun Path.withChild(child: String): Path = resolve(child)

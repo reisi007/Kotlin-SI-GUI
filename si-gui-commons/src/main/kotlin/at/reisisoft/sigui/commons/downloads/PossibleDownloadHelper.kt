@@ -2,6 +2,7 @@ package at.reisisoft.sigui.commons.downloads
 
 import at.reisisoft.checkpoint
 import at.reisisoft.stream
+import at.reisisoft.toMap
 import at.reisisoft.toSortedSet
 import org.jsoup.Connection
 import org.jsoup.HttpStatusException
@@ -14,27 +15,38 @@ import kotlin.collections.ArrayList
 
 object PossibleDownloadHelper {
 
-    fun fetchPossibleFor(
+    private val ALL_DOWNLOAD_LOCATIONS by lazy { DownloadLocation.values() }
+
+    fun fetchPossibleFor(downloadTypes: Array<DownloadType>): Map<DownloadLocation, Set<DownloadInformation>> =
+        fetchPossibleFor(ALL_DOWNLOAD_LOCATIONS, downloadTypes, true)
+
+    private fun fetchPossibleFor(
         downloadLocations: Array<DownloadLocation>,
-        downloadTypes: Array<DownloadType>
-    ): SortedSet<DownloadInformation> =
+        downloadTypes: Array<DownloadType>,
+        executeInParallel: Boolean = false
+    ): Map<DownloadLocation, Set<DownloadInformation>> =
         setOf(*downloadTypes).let {
-            downloadLocations.stream().flatMap { downloadLocation ->
-                when (downloadLocation) {
-                    DownloadLocation.DAILY -> possibleDailyDownloads(it)
-                    DownloadLocation.STABLE -> possibleReleaseVersion(
-                        setOf(ReleaseType.STABLE, ReleaseType.FRESH),
-                        it
-                    )
-                    DownloadLocation.ARCHIVE -> possibleArchive(it)
-                    else -> throw IllegalStateException("Unexpected location $downloadLocation")
-                }.stream()
-            }.toSortedSet()
+            downloadLocations.stream().apply { if (executeInParallel) parallel() }
+                .map { downloadLocation ->
+                    downloadLocation to when (downloadLocation) {
+                        DownloadLocation.DAILY -> possibleDailyDownloads(it)
+                        DownloadLocation.STABLE -> possibleReleaseVersion(
+                            setOf(ReleaseType.STABLE, ReleaseType.FRESH),
+                            it
+                        )
+                        DownloadLocation.ARCHIVE -> possibleArchive(it)
+                        else -> throw IllegalStateException("Unexpected location $downloadLocation")
+                    }
+                }.toMap()
         }
+
 
     private const val firstDesktopArchiveVersion = "3.3.0.4/"
     private const val lastDesktopArchiveVersion = "latest/"
-    private fun possibleArchiveDesktop(baseUrlDocument: Document): SortedSet<DownloadInformation> =
+    private fun possibleArchiveDesktop(
+        baseUrlDocument: Document,
+        downloadTypes: Set<DownloadType>
+    ): SortedSet<DownloadInformation> =
         baseUrlDocument.select("a[href]").let { elements ->
             val downloadVersionInfo = TreeSet<DownloadInformation>()
             var firstVersionSeen = false
@@ -50,25 +62,25 @@ object PossibleDownloadHelper {
                                     getCorrectBaseUrlForOS(
                                         baseUrlDocument.location(),
                                         versionInfo,
-                                        ArrayList<DownloadType>().apply {
+                                        ArrayList<DownloadType>().also {
                                             //Add Support information
-                                            if (versionInfo < "3.5")
-                                                add(DownloadType.WINDOWSEXE)
-                                            else
-                                                add(DownloadType.WINDOWS32)
+                                            if (downloadTypes.contains(DownloadType.WINDOWSEXE) && versionInfo < "3.5")
+                                                it.add(DownloadType.WINDOWSEXE)
+                                            else if (downloadTypes.contains(DownloadType.WINDOWS32))
+                                                it.add(DownloadType.WINDOWS32)
 
-                                            if (versionInfo >= "4.4.3.2")
-                                                add(DownloadType.WINDOWS64)
+                                            if (downloadTypes.contains(DownloadType.WINDOWS64) && versionInfo >= "4.4.3.2")
+                                                it.add(DownloadType.WINDOWS64)
 
                                             //Add all elements which have always been available
-                                            addAll(
-                                                arrayOf(
-                                                    DownloadType.LINUX_DEB_64,
-                                                    DownloadType.LINUX_DEB_32,
-                                                    DownloadType.LINUX_RPM_64,
-                                                    DownloadType.LINUX_RPM_32
-                                                )
-                                            )
+                                            arrayOf(
+                                                DownloadType.LINUX_DEB_64,
+                                                DownloadType.LINUX_DEB_32,
+                                                DownloadType.LINUX_RPM_64,
+                                                DownloadType.LINUX_RPM_32,
+                                                DownloadType.MAC
+                                            ).stream().filter(downloadTypes::contains).forEach { dt -> it.add(dt) }
+
                                         })
                                 )
                             }
@@ -88,7 +100,7 @@ object PossibleDownloadHelper {
                 downloads += possibleArchiveAndroid("loviewer", rootDocument)
             if (downloadTypes.contains(DownloadType.ANDROID_REMOTE))
                 downloads += possibleArchiveAndroid("sdremote", rootDocument)
-            downloads += possibleArchiveDesktop(rootDocument)
+            downloads += possibleArchiveDesktop(rootDocument, downloadTypes)
             return@let downloads
         }
 
@@ -144,7 +156,7 @@ object PossibleDownloadHelper {
                     getCorrectBaseUrlForOS(
                         "${rootDocument.location()}$urlFragment",
                         "LibreOffice $release",
-                        downloadTypes
+                        TreeSet(downloadTypes).apply { remove(DownloadType.WINDOWSEXE) }
                     ).stream()
                 }
         }.toSortedSet()
@@ -280,6 +292,6 @@ object PossibleDownloadHelper {
             throw ste
         }
 
-    private const val CONNECTION_TIMEOUT = 5000/*5 seconds*/
+    private const val CONNECTION_TIMEOUT = 10000//10 seconds
 
 }

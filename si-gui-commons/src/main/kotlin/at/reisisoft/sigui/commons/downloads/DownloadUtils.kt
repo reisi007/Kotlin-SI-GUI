@@ -8,7 +8,7 @@ enum class DownloadType {
 
 
 enum class DownloadLocation {
-    ARCHIVE, DAILY, STABLE
+    ARCHIVE, DAILY, STABLE //, TESTING FIXME implement
 }
 
 internal object DownloadUrls {
@@ -17,6 +17,13 @@ internal object DownloadUrls {
     const val STABLE = "http://download.documentfoundation.org/libreoffice/stable/"
 }
 
+private fun <T : Comparable<T>> comparing(thiz: T, other: T, ifUndecideable: () -> Int): Int =
+    thiz.compareTo(other).let { result ->
+        if (result != 0)
+            return@let result
+        return@let ifUndecideable()
+    }
+
 data class DownloadInformation(
     val baseUrl: String,
     val displayName: String,
@@ -24,39 +31,30 @@ data class DownloadInformation(
 ) :
     Comparable<DownloadInformation> {
 
-    override fun compareTo(other: DownloadInformation): Int {
-        return baseUrl.compareTo(other.baseUrl).let {
-            if (it != 0)
-                it
-            else
-                displayName.compareTo(other.displayName).let {
-                    if (it != 0)
-                        it
-                    else {
-                        val thisIterator = supportedDownloadTypes.iterator()
-                        val otherIterator = other.supportedDownloadTypes.iterator()
+    override fun compareTo(other: DownloadInformation): Int =
+        comparing(displayName, other.displayName) {
+            comparing(baseUrl, other.baseUrl) downloadTypes@{
+                val thisIterator = supportedDownloadTypes.iterator()
+                val otherIterator = other.supportedDownloadTypes.iterator()
 
-                        var thisHasNext = thisIterator.hasNext()
-                        var otherHasNext = otherIterator.hasNext()
-                        while (thisHasNext && otherHasNext) {
-                            val thisE = thisIterator.next()
-                            val otherE = otherIterator.next()
-                            thisE.compareTo(otherE).let {
-                                if (it != 0)
-                                    return it
-                            }
-                            thisHasNext = thisIterator.hasNext()
-                            otherHasNext = otherIterator.hasNext()
-                        }
-                        if (!thisHasNext && !otherHasNext)
-                            return 0
-                        if (thisHasNext && !otherHasNext)
-                            return 2
-                        else
-                            return -2
+                var thisHasNext = thisIterator.hasNext()
+                var otherHasNext = otherIterator.hasNext()
+                while (thisHasNext && otherHasNext) {
+                    val thisE = thisIterator.next()
+                    val otherE = otherIterator.next()
+                    thisE.compareTo(otherE).let {
+                        if (it != 0)
+                            return@downloadTypes it
                     }
+                    thisHasNext = thisIterator.hasNext()
+                    otherHasNext = otherIterator.hasNext()
                 }
+                if (!thisHasNext && !otherHasNext)
+                    return@downloadTypes 0
+                if (thisHasNext && !otherHasNext)
+                    return@downloadTypes 2
+                else
+                    return@downloadTypes -2
+            }
         }
-    }
-
 }
