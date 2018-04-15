@@ -16,10 +16,15 @@
             </MenuBar>
         </HBox>
         <HBox fillHeight="false" spacing="7.0">
-            <VBox prefHeight="200.0" prefWidth="182.0" spacing="7.0">
+            <VBox fx:id="vBoxUpdate" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="182.0" spacing="7.0">
                 <Accordion fx:id="downloadAccordion" maxHeight="75.0" maxWidth="250.0" prefWidth="250.0"/>
-                <Button fx:id="mainStartDl" mnemonicParsing="false" onAction="#updateListOfDownloadVersions"
+                <Button fx:id="updateListOfVersions" mnemonicParsing="false" onAction="#updateListOfDownloadVersions"
                         text="%downloadlist.update"/>
+                <ProgressIndicator fx:id="indicatorUpdateVersions" visible="false">
+                    <VBox.margin>
+                        <Insets bottom="4.0" top="4.0"/>
+                    </VBox.margin>
+                </ProgressIndicator>
                 <padding>
                     <Insets left="7.0" right="7.0"/>
                 </padding>
