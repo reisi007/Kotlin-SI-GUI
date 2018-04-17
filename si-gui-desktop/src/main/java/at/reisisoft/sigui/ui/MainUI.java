@@ -1,5 +1,7 @@
 package at.reisisoft.sigui.ui;
 
+import at.reisisoft.sigui.settings.SettingsKt;
+import at.reisisoft.sigui.settings.SiGuiSetting;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -7,6 +9,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.net.URL;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
@@ -16,6 +19,8 @@ public class MainUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        SiGuiSetting settings = SettingsKt.loadSettings();
+        Locale.setDefault(Locale.forLanguageTag(settings.getUiLanguage()));
         FXMLLoader loader = new FXMLLoader();
         URL uiDescription = MainUI.class.getClassLoader().getResource("mainUI.fxml");
         ResourceBundle languageSupport = ResourceBundle.getBundle("uistrings.sigui-desktop");
@@ -23,6 +28,7 @@ public class MainUI extends Application {
         loader.setLocation(uiDescription);
         Parent mainUi = loader.load();
         controller = loader.getController();
+        controller.internalSetSettings(settings);
         primaryStage.setScene(new Scene(mainUi));
         primaryStage.show();
     }
@@ -32,7 +38,7 @@ public class MainUI extends Application {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         Objects.requireNonNull(controller).close();
         System.exit(0);
     }
