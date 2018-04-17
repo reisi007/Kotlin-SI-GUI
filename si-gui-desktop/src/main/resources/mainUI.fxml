@@ -8,10 +8,13 @@
     <VBox prefHeight="400.0" prefWidth="600.0" spacing="7.0">
         <HBox fillHeight="false">
             <MenuBar fx:id="menuBar" focusTraversable="true" HBox.hgrow="ALWAYS">
+                <Menu text="SI-GUI">
+                    <MenuItem fx:id="m_options" onAction="#openOptionMenu" text="%options.title"/>
+                </Menu>
                 <Menu text="Help">
-                    <MenuItem fx:id="manual" text="Online Manual"/>
+                    <MenuItem fx:id="m_manual" text="Online Manual"/>
                     <SeparatorMenuItem/>
-                    <MenuItem fx:id="about" text="About"/>
+                    <MenuItem fx:id="m_about" text="About"/>
                 </Menu>
             </MenuBar>
         </HBox>

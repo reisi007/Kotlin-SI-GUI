@@ -13,9 +13,14 @@ import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import javafx.collections.FXCollections
 import javafx.event.ActionEvent
+import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
+import javafx.scene.Parent
+import javafx.scene.Scene
 import javafx.scene.control.*
 import javafx.scene.layout.VBox
+import javafx.stage.Stage
+import javafx.util.StringConverter
 import java.net.URL
 import java.util.*
 import java.util.concurrent.Executors
@@ -152,7 +157,22 @@ class MainUIController : Initializable, AutoCloseable {
                     downloadAccordion.panes.apply {
                         add(TitledPane(localizedName, ComboBox<DownloadInformation>().also {
                             tmpChoiceBoxMap.put(localizedName, it)
+                            val converter = object : StringConverter<DownloadInformation>() {
+                                private val relationMap: MutableMap<String, DownloadInformation?> = HashMap()
+
+                                override fun toString(data: DownloadInformation?): String {
+                                    val betterToString = data.toString() //TODO better implementation
+                                    relationMap.putIfAbsent(betterToString, data)
+                                    return betterToString
+                                }
+
+                                override fun fromString(string: String): DownloadInformation? {
+                                    return relationMap.getValue(string)
+                                }
+                            }
                             it.prefWidthProperty().bind(downloadAccordion.widthProperty())
+                            it.converter = converter
+
                         }).also {
                             tmpTitlePaneMap.put(localizedName, it)
                         })
@@ -180,6 +200,27 @@ class MainUIController : Initializable, AutoCloseable {
         settings.persist()
         if (executorServiceDelegate.isInitialized())
             executorService.shutdownNow()
+    }
+
+    fun openOptionMenu(actionEvent: ActionEvent) {
+        println("Open Options menu")
+
+        FXMLLoader().let { loader ->
+            MainUIController::class.java.classLoader.getResource("optionUI.fxml").let { fxml ->
+                loader.resources = localisationSupport
+                loader.location = fxml
+                val parent: Parent = loader.load()
+                val optionController = loader.getController<OptionUIController>()!!
+                optionController.settings = settings
+                Stage().apply {
+                    //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
+                    title = localisationSupport.getString(UiStrings.OPTIONS_TITLE)
+                    scene = Scene(parent)
+                }.showAndWait()
+                settings = optionController.settings
+                executorService.submit { settings.persist() }
+            }
+        }
     }
 
     private val downloadManager by lazy { DownloadManager.getInstance(executorService) }
