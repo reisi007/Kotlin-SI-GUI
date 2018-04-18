@@ -19,9 +19,9 @@ public interface DownloadManager extends AutoCloseable {
 
     void addDownload(@NotNull URL from, @NotNull Path to);
 
-    void addDownloadFinishedListener(@NotNull DownloadFinishedListener listener);
+    void addDownloadProgressListener(@NotNull DownloadProgressListener listener);
 
-    void removeDownloadFinishedListener(@NotNull DownloadFinishedListener listener);
+    void removeDownloadProgressListener(@NotNull DownloadProgressListener listener);
 
     void cancelAllDownloads();
 }
