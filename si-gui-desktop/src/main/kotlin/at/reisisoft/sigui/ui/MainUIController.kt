@@ -6,7 +6,6 @@ import at.reisisoft.sigui.commons.downloads.DownloadType
 import at.reisisoft.sigui.commons.downloads.PossibleDownloadHelper
 import at.reisisoft.sigui.download.DownloadManager
 import at.reisisoft.sigui.settings.SiGuiSetting
-import at.reisisoft.sigui.ui.UiStrings.DOWNLOADLIST_DAILY
 import at.reisisoft.ui.doLocalized
 import at.reisisoft.ui.runOnUiThread
 import com.google.common.collect.BiMap
@@ -149,7 +148,7 @@ class MainUIController : Initializable, AutoCloseable {
         downloadLocationToNameMap = HashBiMap.create<DownloadLocation, String>().also {
             arrayOf(
                 DownloadLocation.STABLE to UiStrings.DOWNLOADLIST_NAMED,
-                DownloadLocation.DAILY to DOWNLOADLIST_DAILY,
+                DownloadLocation.DAILY to UiStrings.DOWNLOADLIST_DAILY,
                 DownloadLocation.ARCHIVE to UiStrings.DOWNLOADLIST_ARCHIVE
             ).forEach { (dlLocation, key) ->
                 localisationSupport.doLocalized(key) { localizedName ->

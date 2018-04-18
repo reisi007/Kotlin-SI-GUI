@@ -8,13 +8,14 @@ enum class DownloadType {
 
 
 enum class DownloadLocation {
-    ARCHIVE, DAILY, STABLE //, TESTING FIXME implement
+    ARCHIVE, DAILY, STABLE, TESTING
 }
 
 internal object DownloadUrls {
     const val ARCHIVE = "https://downloadarchive.documentfoundation.org/libreoffice/old/"
     const val DAILY = "https://dev-builds.libreoffice.org/daily/"
     const val STABLE = "http://download.documentfoundation.org/libreoffice/stable/"
+    const val TESTING = "http://download.documentfoundation.org/libreoffice/testing/"
 }
 
 private fun <T : Comparable<T>> comparing(thiz: T, other: T, ifUndecideable: () -> Int): Int =

@@ -3,13 +3,15 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ButtonBar?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.VBox?>
 <AnchorPane prefHeight="400.0" prefWidth="250.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.OptionUIController">
     <children>
-        <VBox alignment="BOTTOM_CENTER" layoutX="0.0" prefHeight="400.0" prefWidth="200.0" spacing="7.0">
+        <VBox alignment="BOTTOM_CENTER" layoutX="0.0" prefHeight="400.0" prefWidth="250.0" spacing="7.0">
             <children>
-                <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="7.0" VBox.vgrow="ALWAYS"/>
+                <FlowPane fx:id="optionHolder" prefHeight="0.0" prefWidth="250.0"/>
                 <ButtonBar prefHeight="40.0" prefWidth="200.0">
                     <buttons>
                         <Button fx:id="closeButton" mnemonicParsing="false" onAction="#onCloseRequested"

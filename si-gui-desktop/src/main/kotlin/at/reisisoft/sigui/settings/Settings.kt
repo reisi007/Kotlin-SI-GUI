@@ -1,7 +1,9 @@
 package at.reisisoft.sigui.settings
 
+import at.reisisoft.sigui.OSUtils
 import at.reisisoft.sigui.commons.downloads.DownloadInformation
 import at.reisisoft.sigui.commons.downloads.DownloadLocation
+import at.reisisoft.sigui.commons.downloads.DownloadType
 import at.reisisoft.withChild
 import com.google.gson.Gson
 import java.nio.charset.StandardCharsets
@@ -13,7 +15,8 @@ import java.util.*
 internal data class SiGuiSetting(
     val downloadedVersions: Map<DownloadLocation, Set<DownloadInformation>> = emptyMap(),
     val downloadSelection: Pair<DownloadLocation, DownloadInformation?>? = null,
-    val uiLanguage: String = Locale.getDefault().toLanguageTag()
+    val uiLanguage: String = Locale.getDefault().toLanguageTag(),
+    val downloadTypes: List<DownloadType> = OSUtils.CURRENT_OS.downloadTypesForOS()
 ) {
     internal fun persist() = storeSettings(this)
 }

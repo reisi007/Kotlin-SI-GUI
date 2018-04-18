@@ -28,13 +28,14 @@ object PossibleDownloadHelper {
         setOf(*downloadTypes).let {
             downloadLocations.stream().apply { if (executeInParallel) parallel() }
                 .map { downloadLocation ->
-                    downloadLocation to when (downloadLocation) {
-                        DownloadLocation.DAILY -> possibleDailyDownloads(it)
-                        DownloadLocation.STABLE -> possibleReleaseVersion(
+                    when (downloadLocation) {
+                        DownloadLocation.DAILY -> downloadLocation to possibleDailyDownloads(it)
+                        DownloadLocation.STABLE -> downloadLocation to possibleReleaseVersion(
                             setOf(ReleaseType.STABLE, ReleaseType.FRESH),
                             it
                         )
-                        DownloadLocation.ARCHIVE -> possibleArchive(it)
+                        DownloadLocation.ARCHIVE -> downloadLocation to possibleArchive(it)
+                        DownloadLocation.TESTING -> DownloadLocation.STABLE to possibleTestingVersion(it)
                         else -> throw IllegalStateException("Unexpected location $downloadLocation")
                     }
                 }.toMap()
@@ -120,6 +121,19 @@ object PossibleDownloadHelper {
         }.toSortedSet()
     }
 
+    private fun possibleTestingVersion(downloadTypes: Set<DownloadType>): SortedSet<DownloadInformation> =
+        parseHtmlDocument(DownloadUrls.TESTING).let { rootDoocument ->
+            rootDoocument.select("table a[href~=\\.]").stream()
+                .map { it.attr("href") }.filter { it.endsWith('/') }
+                .flatMap { urlFragment ->
+                    getCorrectBaseUrlForOS(
+                        "${rootDoocument.location()}$urlFragment",
+                        "TESTING ${urlFragment.let { it.substring(0, it.length - 1) }}",
+                        TreeSet(downloadTypes).apply { remove(DownloadType.WINDOWSEXE) }
+                    ).stream()
+                }.toSortedSet()
+        }
+
     private enum class ReleaseType { STABLE, FRESH }
 
     private fun possibleReleaseVersion(
@@ -148,14 +162,14 @@ object PossibleDownloadHelper {
                     }
                 }
 
-            rootDocument.select("table a[href~=.]").stream()
+            rootDocument.select("table a[href~=\\.]").stream()
                 .map { it.attr("href") }
                 .filter { !it.startsWith('/') && it.endsWith('/') }
                 .max(versionComperator)
                 .orElseThrow { throw IllegalStateException("Unable to find $release!") }.let { urlFragment ->
                     getCorrectBaseUrlForOS(
                         "${rootDocument.location()}$urlFragment",
-                        "LibreOffice $release",
+                        release.toString(),
                         TreeSet(downloadTypes).apply { remove(DownloadType.WINDOWSEXE) }
                     ).stream()
                 }
