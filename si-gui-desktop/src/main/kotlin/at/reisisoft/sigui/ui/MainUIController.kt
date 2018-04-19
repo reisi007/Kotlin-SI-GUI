@@ -1,12 +1,10 @@
 package at.reisisoft.sigui.ui
 
-import at.reisisoft.sigui.commons.downloads.DownloadInformation
-import at.reisisoft.sigui.commons.downloads.DownloadLocation
-import at.reisisoft.sigui.commons.downloads.DownloadType
-import at.reisisoft.sigui.commons.downloads.PossibleDownloadHelper
+import at.reisisoft.sigui.commons.downloads.*
 import at.reisisoft.sigui.download.DownloadManager
 import at.reisisoft.sigui.settings.SiGuiSetting
 import at.reisisoft.ui.doLocalized
+import at.reisisoft.ui.getReplacedString
 import at.reisisoft.ui.runOnUiThread
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
@@ -160,7 +158,33 @@ class MainUIController : Initializable, AutoCloseable {
                                 private val relationMap: MutableMap<String, DownloadInformation?> = HashMap()
 
                                 override fun toString(data: DownloadInformation?): String {
-                                    val betterToString = data.toString() //TODO better implementation
+                                    var betterToString: String = data?.let {
+                                        when {
+                                            it.displayName == "FRESH" -> localisationSupport.getString(UiStrings.DOWNLOADLIST_FRESH)
+                                            it.displayName == "STABLE" -> localisationSupport.getString(UiStrings.DOWNLOADLIST_STABLE)
+                                            it.displayName.startsWith("TESTING") -> localisationSupport.getReplacedString(
+                                                UiStrings.DOWNLOADLIST_TESTING,
+                                                it.displayName.let {
+                                                    it.lastIndexOf(' ').let { offset ->
+                                                        it.substring(offset + 1)
+                                                    }
+                                                })
+                                            else -> it.displayName
+                                        }
+                                    } ?: "NULL"
+
+                                    betterToString = betterToString + " (" +
+                                            (data?.let {
+                                                it.supportedDownloadTypes.map {
+                                                    when {
+                                                        it == DownloadType.WINDOWSEXE || it == DownloadType.WINDOWS32 ||
+                                                                it == DownloadType.LINUX_RPM_32 || it == DownloadType.LINUX_DEB_32 -> "32 bit"
+                                                        else -> "64-bit"
+                                                    }
+                                                }.joinToString(separator = ", ") { it }
+
+                                            } ?: "???") + ")"
+
                                     relationMap.putIfAbsent(betterToString, data)
                                     return betterToString
                                 }
@@ -222,5 +246,9 @@ class MainUIController : Initializable, AutoCloseable {
         }
     }
 
-    private val downloadManager by lazy { DownloadManager.getInstance(executorService) }
+    private val downloadManager: DownloadManager<LibreOfficeDownloadFileType> by lazy {
+        DownloadManager.getInstance<LibreOfficeDownloadFileType>(
+            executorService
+        )
+    }
 }

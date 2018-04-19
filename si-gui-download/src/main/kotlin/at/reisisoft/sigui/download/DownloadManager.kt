@@ -10,24 +10,26 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-interface DownloadProgressListener {
+data class DownloadFinishedEvent<Custom>(val file: Path, val customData: Custom)
+
+interface DownloadProgressListener<Custom> {
 
     fun onProgresUpdate(percentage: Double)
 
-    fun onCompleted(file: Path)
+    fun onCompleted(downloadFinishedEvent: DownloadFinishedEvent<Custom>)
 
     fun onError(e: Exception)
 }
 
-internal class DownloadManagerImpl(private val executorService: ExecutorService, private val owned: Boolean) :
-    DownloadManager {
+internal class DownloadManagerImpl<T>(private val executorService: ExecutorService, private val owned: Boolean) :
+    DownloadManager<T> {
 
     private val activeDownloads: MutableList<Future<out Any>> = LinkedList()
 
     constructor() : this(Executors.newCachedThreadPool(), true)
 
 
-    override fun addDownload(from: URL, to: Path) {
+    override fun addDownload(from: URL, to: Path, customData: T) {
         activeDownloads += executorService.submit {
             var continueDownlaod = true
             var currentFileProgress = 0L
@@ -48,7 +50,9 @@ internal class DownloadManagerImpl(private val executorService: ExecutorService,
                                     }
                                 }
                                 progressUpdate(-downloadSize, -downloadSize)
-                                listeners.forEach { it.onCompleted(to) }
+                                DownloadFinishedEvent(to, customData).let { event ->
+                                    listeners.forEach { it.onCompleted(event) }
+                                }
                             }
                         }
                     } catch (e: IOException) {
@@ -70,13 +74,13 @@ internal class DownloadManagerImpl(private val executorService: ExecutorService,
         }
     }
 
-    private val listeners: MutableList<DownloadProgressListener> = ArrayList()
+    private val listeners: MutableList<DownloadProgressListener<T>> = ArrayList()
 
-    override fun addDownloadProgressListener(listener: DownloadProgressListener) {
+    override fun addDownloadProgressListener(listener: DownloadProgressListener<T>) {
         listeners -= listener
     }
 
-    override fun removeDownloadProgressListener(listener: DownloadProgressListener) {
+    override fun removeDownloadProgressListener(listener: DownloadProgressListener<T>) {
         listeners += listener
     }
 

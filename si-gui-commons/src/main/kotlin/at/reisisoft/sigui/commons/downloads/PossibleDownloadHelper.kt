@@ -10,6 +10,10 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.SocketTimeoutException
 import java.util.*
+import java.util.function.*
+import java.util.function.Function
+import java.util.stream.Collector
+import java.util.stream.Collectors
 import kotlin.Comparator
 import kotlin.collections.ArrayList
 
@@ -291,6 +295,52 @@ object PossibleDownloadHelper {
                 println("Cannot infer downloadtype for: $thinderboxName")
                 setOf(DownloadType.UNKNOWN)
             }
+        }
+
+    fun getFinalDownloadUrls(
+        baseUrl: String,
+        fileTypes: Set<LibreOfficeDownloadFileType>,
+        hpLanguage: String
+    ): Map<LibreOfficeDownloadFileType, String> =
+        parseHtmlDocument(baseUrl).let { rootDocument ->
+            if (fileTypes.contains(LibreOfficeDownloadFileType.HP) && hpLanguage == ".")
+                throw IllegalStateException("Helppack language is needed!")
+            val regexMap: Map<LibreOfficeDownloadFileType, Predicate<String>> =
+                fileTypes.stream().map { it to LibreOfficeDownloadFileType.getPredicateFor(it, hpLanguage) }
+                    .collect(Collectors.toMap({ it.first }, { it.second }))
+            rootDocument.select("a[href]:first-child").map { it.html() }
+                .let { listOfFileNames ->
+                    fileTypes.stream().map { it to listOfFileNames }
+                        .flatMap { (key, value) ->
+                            value.stream().map { newValue -> key to newValue }
+                        }.filter { (type, testName) -> regexMap.getValue(type).test(testName) }
+                        .collect(object :
+                            Collector<Pair<LibreOfficeDownloadFileType, String>, MutableMap<LibreOfficeDownloadFileType, String>, Map<LibreOfficeDownloadFileType, String>> {
+                            override fun characteristics(): Set<Collector.Characteristics> =
+                                setOf(Collector.Characteristics.UNORDERED)
+
+                            override fun supplier(): Supplier<MutableMap<LibreOfficeDownloadFileType, String>> =
+                                Supplier { EnumMap<LibreOfficeDownloadFileType, String>(LibreOfficeDownloadFileType::class.java) }
+
+                            override fun accumulator(): BiConsumer<MutableMap<LibreOfficeDownloadFileType, String>, Pair<LibreOfficeDownloadFileType, String>> =
+                                BiConsumer { map, (k, v) ->
+                                    map.putIfAbsent(k, v)
+                                }
+
+                            override fun combiner(): BinaryOperator<MutableMap<LibreOfficeDownloadFileType, String>> =
+                                BinaryOperator { thiz, other ->
+                                    other.entries.stream().forEach { (k, v) -> thiz.putIfAbsent(k, v) }
+                                    thiz
+                                }
+
+                            override fun finisher(): Function<MutableMap<LibreOfficeDownloadFileType, String>, Map<LibreOfficeDownloadFileType, String>> =
+                                Function {
+                                    Collections.unmodifiableMap(it)
+                                }
+
+                        }
+                        )
+                }
         }
 
 
