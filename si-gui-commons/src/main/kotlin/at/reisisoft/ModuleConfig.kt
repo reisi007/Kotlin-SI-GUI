@@ -2,10 +2,8 @@ package at.reisisoft;
 
 import java.nio.file.Path
 import java.util.*
-import java.util.function.BiConsumer
-import java.util.function.BinaryOperator
+import java.util.function.*
 import java.util.function.Function
-import java.util.function.Supplier
 import java.util.stream.Collector
 import java.util.stream.Collectors
 import java.util.stream.Stream
@@ -54,3 +52,5 @@ fun <K, E : Comparable<E>> Stream<Pair<K, SortedSet<E>>>.toMap(): Map<K, SortedS
     })
 
 infix fun Path.withChild(child: String): Path = resolve(child)
+
+infix fun <T> Predicate<T>.and(other: Predicate<T>) = this.and(other)

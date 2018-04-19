@@ -114,13 +114,15 @@ object PossibleDownloadHelper {
         folderContainsString: String,
         baseUrlDocument: Document
     ): SortedSet<DownloadInformation> = baseUrlDocument.select("a[href~=$folderContainsString]").let {
-        it.stream().map {
-            it.attr("href").let {
-                DownloadInformation(
-                    "${baseUrlDocument.location()}$it",
-                    it.substring(0, it.length - 1),
-                    setOf(DownloadType.ANDROID_LIBREOFFICE_X86, DownloadType.ANDROID_LIBREOFFICE_ARM)
-                )
+        it.stream().flatMap {
+            setOf(DownloadType.ANDROID_LIBREOFFICE_X86, DownloadType.ANDROID_LIBREOFFICE_ARM).stream().map { dlType ->
+                it.attr("href").let {
+                    DownloadInformation(
+                        "${baseUrlDocument.location()}$it",
+                        it.substring(0, it.length - 1),
+                        dlType
+                    )
+                }
             }
         }.toSortedSet()
     }
@@ -198,8 +200,11 @@ object PossibleDownloadHelper {
             DownloadType.WINDOWS64 -> "win/$bit64/"
             else -> ""
         }
-    }.map { (downloadType, urlFragment) ->
-        DownloadInformation("$baseUrlWithoutOS$urlFragment", displayName, downloadType)
+    }.flatMap { (downloadTypes, urlFragment) ->
+        downloadTypes.stream()
+            .map { downloadType ->
+                DownloadInformation("$baseUrlWithoutOS$urlFragment", displayName, downloadType)
+            }
     }.toSortedSet()
 
     private fun possibleDailyDownloads(wantedDailyBuilds: Set<DownloadType>): SortedSet<DownloadInformation> =
@@ -214,23 +219,24 @@ object PossibleDownloadHelper {
                         .flatMap { (branchName, level2Document) ->
                             //Build new URL
                             level2Document.select("a[href~=@]").let { thinderboxNames ->
-                                thinderboxNames.stream().parallel().map { it.attr("href") }.map { thinderboxName ->
-                                    DownloadInformation(
-                                        level2Document.location() + thinderboxName + "current/",
-                                        "${branchName.substring(
-                                            0,
-                                            branchName.length - 1
-                                        )}-${thinderboxName.substring(
-                                            0,
-                                            thinderboxName.length - 1
-                                        )}", getDownloadTypeFromThinderboxName(thinderboxName)
-
-                                    )
+                                thinderboxNames.stream().parallel().map { it.attr("href") }.flatMap { thinderboxName ->
+                                    getDownloadTypesFromThinderboxName(thinderboxName).stream().map {
+                                        DownloadInformation(
+                                            level2Document.location() + thinderboxName + "current/",
+                                            "${branchName.substring(
+                                                0,
+                                                branchName.length - 1
+                                            )}-${thinderboxName.substring(
+                                                0,
+                                                thinderboxName.length - 1
+                                            )}", it
+                                        )
+                                    }
                                 }.filter {
-                                    it.supportedDownloadTypes.let { supportedTypes ->
-                                        !supportedTypes.contains(DownloadType.UNKNOWN) && supportedTypes.any { supportedType ->
-                                            wantedDailyBuilds.contains(supportedType)
-                                        }
+                                    it.supportedDownloadType.let { supportedType ->
+                                        supportedType != DownloadType.UNKNOWN && wantedDailyBuilds.contains(
+                                            supportedType
+                                        )
                                     }
                                 }
                                     //We now know every possible Thinderbox location. Now check if the Thinderbox is useful.
@@ -256,7 +262,7 @@ object PossibleDownloadHelper {
     /**
      * Only Windows and Android are supported
      */
-    private fun getDownloadTypeFromThinderboxName(thinderboxName: String): Set<DownloadType> =
+    private fun getDownloadTypesFromThinderboxName(thinderboxName: String): Set<DownloadType> =
         when {
             thinderboxName.contains(
                 "win",
@@ -299,6 +305,7 @@ object PossibleDownloadHelper {
 
     fun getFinalDownloadUrls(
         baseUrl: String,
+        downloadType: DownloadType,
         fileTypes: Set<LibreOfficeDownloadFileType>,
         hpLanguage: String
     ): Map<LibreOfficeDownloadFileType, String> =
@@ -306,7 +313,8 @@ object PossibleDownloadHelper {
             if (fileTypes.contains(LibreOfficeDownloadFileType.HP) && hpLanguage == ".")
                 throw IllegalStateException("Helppack language is needed!")
             val regexMap: Map<LibreOfficeDownloadFileType, Predicate<String>> =
-                fileTypes.stream().map { it to LibreOfficeDownloadFileType.getPredicateFor(it, hpLanguage) }
+                fileTypes.stream()
+                    .map { it to LibreOfficeDownloadFileType.getPredicateFor(it, downloadType, hpLanguage) }
                     .collect(Collectors.toMap({ it.first }, { it.second }))
             rootDocument.select("a[href]:first-child").map { it.html() }
                 .let { listOfFileNames ->

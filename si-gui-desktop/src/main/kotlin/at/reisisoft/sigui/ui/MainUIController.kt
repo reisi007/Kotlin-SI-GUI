@@ -174,17 +174,13 @@ class MainUIController : Initializable, AutoCloseable {
                                     } ?: "NULL"
 
                                     betterToString = betterToString + " (" +
-                                            (data?.let {
-                                                it.supportedDownloadTypes.map {
-                                                    when {
-                                                        it == DownloadType.WINDOWSEXE || it == DownloadType.WINDOWS32 ||
-                                                                it == DownloadType.LINUX_RPM_32 || it == DownloadType.LINUX_DEB_32 -> "32 bit"
-                                                        else -> "64-bit"
-                                                    }
-                                                }.joinToString(separator = ", ") { it }
-
+                                            (data?.supportedDownloadType?.let {
+                                                when (it) {
+                                                    DownloadType.WINDOWSEXE, DownloadType.WINDOWS32, DownloadType.LINUX_RPM_32, DownloadType.LINUX_DEB_32
+                                                    -> "32 bit"
+                                                    else -> "64 bit"
+                                                }
                                             } ?: "???") + ")"
-
                                     relationMap.putIfAbsent(betterToString, data)
                                     return betterToString
                                 }

@@ -28,34 +28,14 @@ private fun <T : Comparable<T>> comparing(thiz: T, other: T, ifUndecideable: () 
 data class DownloadInformation(
     val baseUrl: String,
     val displayName: String,
-    val supportedDownloadTypes: Set<DownloadType>
+    val supportedDownloadType: DownloadType
 ) :
     Comparable<DownloadInformation> {
 
     override fun compareTo(other: DownloadInformation): Int =
         comparing(displayName, other.displayName) {
-            comparing(baseUrl, other.baseUrl) downloadTypes@{
-                val thisIterator = supportedDownloadTypes.iterator()
-                val otherIterator = other.supportedDownloadTypes.iterator()
-
-                var thisHasNext = thisIterator.hasNext()
-                var otherHasNext = otherIterator.hasNext()
-                while (thisHasNext && otherHasNext) {
-                    val thisE = thisIterator.next()
-                    val otherE = otherIterator.next()
-                    thisE.compareTo(otherE).let {
-                        if (it != 0)
-                            return@downloadTypes it
-                    }
-                    thisHasNext = thisIterator.hasNext()
-                    otherHasNext = otherIterator.hasNext()
-                }
-                if (!thisHasNext && !otherHasNext)
-                    return@downloadTypes 0
-                if (thisHasNext && !otherHasNext)
-                    return@downloadTypes 2
-                else
-                    return@downloadTypes -2
+            comparing(baseUrl, other.baseUrl) {
+                comparing(supportedDownloadType, other.supportedDownloadType) { 0 }
             }
         }
 }

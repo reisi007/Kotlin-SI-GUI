@@ -58,6 +58,7 @@ class ManualTest {
         "https://downloadarchive.documentfoundation.org/libreoffice/old/3.3.1.2/win/x86/".let { urlAsString ->
             PossibleDownloadHelper.getFinalDownloadUrls(
                 urlAsString,
+                WINDOWSEXE,
                 setOf(
                     LibreOfficeDownloadFileType.MAIN,
                     LibreOfficeDownloadFileType.HP,
@@ -67,11 +68,12 @@ class ManualTest {
             ).prettyPrint()
         }
 
-    @Test
+    @Test //This test needs to be regularly updated!
     fun finalDownloadLinkStableWindows64() =
         "http://download.documentfoundation.org/libreoffice/stable/6.0.3/win/x86_64/".let { urlAsString ->
             PossibleDownloadHelper.getFinalDownloadUrls(
                 urlAsString,
+                WINDOWS64,
                 setOf(
                     LibreOfficeDownloadFileType.MAIN,
                     LibreOfficeDownloadFileType.HP,

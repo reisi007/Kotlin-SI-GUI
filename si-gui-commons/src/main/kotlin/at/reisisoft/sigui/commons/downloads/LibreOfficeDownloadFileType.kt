@@ -1,5 +1,6 @@
 package at.reisisoft.sigui.commons.downloads
 
+import at.reisisoft.and
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Predicate
@@ -14,18 +15,19 @@ enum class LibreOfficeDownloadFileType {
 
     companion object {
         @JvmStatic
-        fun fromFilename(fileName: String) =
-            fromFilename(Paths.get(fileName))
+        fun fromFilename(fileName: String, downlaodType: DownloadType) =
+            fromFilename(Paths.get(fileName), downlaodType)
 
         @JvmStatic
-        fun fromFilename(fileName: Path): LibreOfficeDownloadFileType =
+        fun fromFilename(fileName: Path, downlaodType: DownloadType): LibreOfficeDownloadFileType =
             fileName.fileName.toString().let { fileNameAsString ->
                 when {
                     getPredicateFor(
                         HP,
+                        downlaodType,
                         "."
                     ).test(fileNameAsString) -> HP // HP langage "." is just one char in REGEX!
-                    getPredicateFor(SDK).test(fileNameAsString) -> SDK
+                    getPredicateFor(SDK, downlaodType).test(fileNameAsString) -> SDK
                     else -> MAIN
                 }
             }
@@ -48,27 +50,38 @@ enum class LibreOfficeDownloadFileType {
             })
 
 
+        private fun mustContainString(downlaodType: DownloadType): String = when (downlaodType) {
+            DownloadType.MAC -> "mac"
+            DownloadType.WINDOWSEXE, DownloadType.WINDOWS32, DownloadType.WINDOWS64 -> "win"
+            DownloadType.LINUX_DEB_32, DownloadType.LINUX_DEB_64 -> "deb"
+            DownloadType.LINUX_RPM_32, DownloadType.LINUX_RPM_64 -> "rpm"
+            else -> throw IllegalStateException("Must contain string is not defined for $downlaodType")
+        }
+
+
         @JvmStatic
         fun getPredicateFor(
-            downloadType: LibreOfficeDownloadFileType,
+            downloadFileType: LibreOfficeDownloadFileType,
+            downlaodType: DownloadType,
             helppackLanguage: String = "."
-        ): Predicate<String> =
-            when (downloadType) {
-                SDK -> Predicate { !it.contains('/') && sdkRegex.matches(it) }
+        ): Predicate<String> {
+            val mustContain = mustContainString(downlaodType)
+            val predicate = Predicate<String> { !it.contains('/') && it.contains(mustContain, true) }
+            return predicate and when (downloadFileType) {
+                SDK -> Predicate { sdkRegex.matches(it) }
                 HP -> getHPRegex(
                     helppackLanguage
                 ).let { regex ->
-                    Predicate<String> { !it.contains('/') && regex.matches(it) }
+                    Predicate<String> { regex.matches(it) }
                 }
                 MAIN -> {
                     val hp =
                         getHPRegex(".")//any HP
                     Predicate {
-                        !it.contains('/') && !it.contains("multi") && mainRegex.matches(it)
-                                && !hp.matches(it) && !sdkRegex.matches(it)
+                        !it.contains("multi") && mainRegex.matches(it) && !hp.matches(it) && !sdkRegex.matches(it)
                     }
                 }
-
             }
+        }
     }
 }
