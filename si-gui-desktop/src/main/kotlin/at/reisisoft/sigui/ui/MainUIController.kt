@@ -57,11 +57,7 @@ class MainUIController : Initializable, AutoCloseable {
         indicatorUpdateVersions.isVisible = true
         executorService.submit {
             PossibleDownloadHelper.fetchPossibleFor(
-                arrayOf(//TODO make variable
-                    DownloadType.WINDOWSEXE,
-                    DownloadType.WINDOWS32,
-                    DownloadType.WINDOWS64
-                )
+                settings.downloadTypes
             ).let { updatedListOfVersions ->
                 updateAccordion(updatedListOfVersions, storeSettings = true)
                 runOnUiThread {
@@ -175,11 +171,17 @@ class MainUIController : Initializable, AutoCloseable {
 
                                     betterToString = betterToString + " (" +
                                             (data?.supportedDownloadType?.let {
-                                                when (it) {
-                                                    DownloadType.WINDOWSEXE, DownloadType.WINDOWS32, DownloadType.LINUX_RPM_32, DownloadType.LINUX_DEB_32
-                                                    -> "32 bit"
-                                                    else -> "64 bit"
-                                                }
+                                                (when (it) {
+                                                    DownloadType.LINUX_DEB_64, DownloadType.LINUX_DEB_32 -> "DEB - "
+                                                    DownloadType.LINUX_RPM_64, DownloadType.LINUX_RPM_32 -> "RPM - "
+                                                    else -> ""
+                                                }).plus(
+                                                    when (it) {
+                                                        DownloadType.WINDOWSEXE, DownloadType.WINDOWS32, DownloadType.LINUX_RPM_32, DownloadType.LINUX_DEB_32
+                                                        -> "32 bit"
+                                                        else -> "64 bit"
+                                                    }
+                                                )
                                             } ?: "???") + ")"
                                     relationMap.putIfAbsent(betterToString, data)
                                     return betterToString
@@ -229,15 +231,20 @@ class MainUIController : Initializable, AutoCloseable {
                 loader.resources = localisationSupport
                 loader.location = fxml
                 val parent: Parent = loader.load()
-                val optionController = loader.getController<OptionUIController>()!!
-                optionController.settings = settings
-                Stage().apply {
-                    //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
-                    title = localisationSupport.getString(UiStrings.OPTIONS_TITLE)
-                    scene = Scene(parent)
-                }.showAndWait()
-                settings = optionController.settings
-                executorService.submit { settings.persist() }
+                loader.getController<OptionUIController>()!!
+                    .let controller@{ optionController ->
+                        optionController.internalSetSettings(settings)
+                        Stage().apply {
+                            //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
+                            title = localisationSupport.getString(UiStrings.OPTIONS_TITLE)
+                            scene = Scene(parent)
+                        }.showAndWait()
+                        optionController.updateSettings()
+                        return@controller optionController.settings
+                    }.also { newSettings ->
+                        settings = newSettings
+                        executorService.submit { settings.persist() }
+                    }
             }
         }
     }

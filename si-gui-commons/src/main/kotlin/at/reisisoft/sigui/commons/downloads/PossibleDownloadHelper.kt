@@ -21,15 +21,15 @@ object PossibleDownloadHelper {
 
     private val ALL_DOWNLOAD_LOCATIONS by lazy { DownloadLocation.values() }
 
-    fun fetchPossibleFor(downloadTypes: Array<DownloadType>): Map<DownloadLocation, Set<DownloadInformation>> =
+    fun fetchPossibleFor(downloadTypes: List<DownloadType>): Map<DownloadLocation, Set<DownloadInformation>> =
         fetchPossibleFor(ALL_DOWNLOAD_LOCATIONS, downloadTypes, true)
 
     private fun fetchPossibleFor(
         downloadLocations: Array<DownloadLocation>,
-        downloadTypes: Array<DownloadType>,
+        downloadTypes: List<DownloadType>,
         executeInParallel: Boolean = false
     ): Map<DownloadLocation, Set<DownloadInformation>> =
-        setOf(*downloadTypes).let {
+        TreeSet(downloadTypes).let {
             downloadLocations.stream().apply { if (executeInParallel) parallel() }
                 .map { downloadLocation ->
                     when (downloadLocation) {
