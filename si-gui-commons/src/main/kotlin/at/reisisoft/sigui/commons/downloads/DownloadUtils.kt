@@ -1,5 +1,7 @@
 package at.reisisoft.sigui.commons.downloads;
 
+import at.reisisoft.comparing
+
 
 enum class DownloadType {
     UNKNOWN, ANDROID_LIBREOFFICE_ARM, ANDROID_LIBREOFFICE_X86, ANDROID_REMOTE, WINDOWS32, WINDOWS64, WINDOWSEXE,
@@ -16,14 +18,8 @@ internal object DownloadUrls {
     const val DAILY = "https://dev-builds.libreoffice.org/daily/"
     const val STABLE = "http://download.documentfoundation.org/libreoffice/stable/"
     const val TESTING = "http://download.documentfoundation.org/libreoffice/testing/"
+    const val HP_ENDPOINT = ARCHIVE + "latest/win/x86_64/"
 }
-
-private fun <T : Comparable<T>> comparing(thiz: T, other: T, ifUndecideable: () -> Int): Int =
-    thiz.compareTo(other).let { result ->
-        if (result != 0)
-            return@let result
-        return@let ifUndecideable()
-    }
 
 data class DownloadInformation(
     val baseUrl: String,

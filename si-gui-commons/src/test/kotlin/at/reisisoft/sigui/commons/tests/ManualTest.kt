@@ -34,7 +34,7 @@ class ManualTest {
     @Test
     fun manualTestWindows() =
         PossibleDownloadHelper.fetchPossibleFor(
-            arrayOf(
+            listOf(
                 WINDOWSEXE,
                 WINDOWS32,
                 WINDOWS64
@@ -43,15 +43,15 @@ class ManualTest {
 
     @Test
     fun manualTestSdViewer() =
-        PossibleDownloadHelper.fetchPossibleFor(arrayOf(ANDROID_REMOTE)).prettyPrint()
+        PossibleDownloadHelper.fetchPossibleFor(listOf(ANDROID_REMOTE)).prettyPrint()
 
     @Test
     fun manualTestAndroidViewer() =
-        PossibleDownloadHelper.fetchPossibleFor(arrayOf(ANDROID_LIBREOFFICE_ARM)).prettyPrint()
+        PossibleDownloadHelper.fetchPossibleFor(listOf(ANDROID_LIBREOFFICE_ARM)).prettyPrint()
 
     @Test
     fun manualTestLinux() =
-        PossibleDownloadHelper.fetchPossibleFor(arrayOf(LINUX_RPM_32, LINUX_DEB_64)).prettyPrint()
+        PossibleDownloadHelper.fetchPossibleFor(listOf(LINUX_RPM_32, LINUX_DEB_64)).prettyPrint()
 
     @Test
     fun finalDownloadLinkOldWindows() =
@@ -82,4 +82,11 @@ class ManualTest {
                 "en"
             ).prettyPrint()
         }
+
+    @Test
+    fun helppackLanguageTest() = PossibleDownloadHelper.getHelppackLanguages().let {
+        println("Helppack languages")
+        println()
+        it.forEach(::println)
+    }
 }

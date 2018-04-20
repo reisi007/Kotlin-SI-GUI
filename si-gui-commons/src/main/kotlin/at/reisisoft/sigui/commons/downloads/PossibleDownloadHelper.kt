@@ -1,9 +1,6 @@
 package at.reisisoft.sigui.commons.downloads
 
-import at.reisisoft.checkpoint
-import at.reisisoft.stream
-import at.reisisoft.toMap
-import at.reisisoft.toSortedSet
+import at.reisisoft.*
 import org.jsoup.Connection
 import org.jsoup.HttpStatusException
 import org.jsoup.Jsoup
@@ -352,8 +349,15 @@ object PossibleDownloadHelper {
         }
 
 
-    private fun parseHtmlDocument(urlAsString: String): Document = getJsoupResponse(urlAsString).parse()
+    val hpRegex by lazy { Regex("help.*?_(?<languageTag>[a-zA-Z]{1,3}(-[a-zA-Z]{1,3})?)") }
 
+    fun getHelppackLanguages(): Set<Locale> = getLocaleTreeSet().also { set ->
+        parseHtmlDocument(DownloadUrls.HP_ENDPOINT).select("a[href~=help]").stream().map { it.attr("href") }
+            .map { hpRegex.find(it) }.filter(Objects::nonNull).map { it!!.groups["languageTag"]!!.value }
+            .map { Locale.forLanguageTag(it) }.forEach { set.add(it) }
+    }
+
+    private fun parseHtmlDocument(urlAsString: String): Document = getJsoupResponse(urlAsString).parse()
 
     private fun getJsoupResponse(urlAsString: String): Connection.Response =
         try {
@@ -367,3 +371,7 @@ object PossibleDownloadHelper {
     private const val CONNECTION_TIMEOUT = 10000//10 seconds
 
 }
+
+fun getLocaleTreeSet(): TreeSet<Locale> =
+    TreeSet(Comparator<Locale> { o1, o2 -> comparing(o1.toLanguageTag(), o2.toLanguageTag()) { 0 } }
+    )

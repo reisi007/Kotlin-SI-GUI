@@ -54,3 +54,10 @@ fun <K, E : Comparable<E>> Stream<Pair<K, SortedSet<E>>>.toMap(): Map<K, SortedS
 infix fun Path.withChild(child: String): Path = resolve(child)
 
 infix fun <T> Predicate<T>.and(other: Predicate<T>) = this.and(other)
+
+fun <T : Comparable<T>> comparing(thiz: T, other: T, ifUndecideable: () -> Int): Int =
+    thiz.compareTo(other).let { result ->
+        if (result != 0)
+            return@let result
+        return@let ifUndecideable()
+    }
