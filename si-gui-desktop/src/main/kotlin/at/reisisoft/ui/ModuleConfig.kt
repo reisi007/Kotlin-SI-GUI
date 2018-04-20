@@ -1,5 +1,7 @@
 package at.reisisoft.ui
 
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.text.MessageFormat
 import java.util.*
 
@@ -18,3 +20,7 @@ internal fun ResourceBundle.doLocalizedReplace(
     localizedNameFunction: LocalizedNameFunction
 ): Unit = getReplacedString(key, replaceWith)
     .let(localizedNameFunction)
+
+internal fun Throwable.stackTraceAsString(): String = StringWriter().also {
+    printStackTrace(PrintWriter(it, true))
+}.toString()

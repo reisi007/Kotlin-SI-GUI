@@ -15,7 +15,10 @@ internal object ResourceBundleUtils {
     val DOWNLOADLIST_DAILY = "$DOWNLOADLIST.daily"
     private val OPTIONS = "options"
     val OPTIONS_TITLE = "$OPTIONS.title"
+    private val DOWNLAODER = "downloader"
+    val DOWNLOADER_TITLE = "$DOWNLAODER.title"
     val OPENFILE = "openfile"
+    val MAIN_TITLE = "main.title"
 
     internal fun getSupportedLanguages(): Set<Locale> =
         newLocaleTreeSet().apply { add(Locale.forLanguageTag(EN_US)) }.apply {

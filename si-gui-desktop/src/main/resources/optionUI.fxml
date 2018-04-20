@@ -31,8 +31,7 @@
         </VBox>
         <ButtonBar prefHeight="40.0" prefWidth="200.0" VBox.vgrow="NEVER">
             <buttons>
-                <Button fx:id="closeButton" mnemonicParsing="false" onAction="#onCloseRequested"
-                        text="%options.button.close"/>
+                <Button fx:id="closeButton" mnemonicParsing="false" text="%options.button.close"/>
             </buttons>
             <VBox.margin>
                 <Insets left="7.0" right="7.0"/>

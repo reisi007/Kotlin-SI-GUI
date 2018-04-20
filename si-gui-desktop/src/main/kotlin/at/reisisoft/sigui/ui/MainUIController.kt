@@ -1,16 +1,18 @@
 package at.reisisoft.sigui.ui
 
+import at.reisisoft.format
 import at.reisisoft.sigui.commons.downloads.*
+import at.reisisoft.sigui.download.DownloadFinishedEvent
 import at.reisisoft.sigui.download.DownloadManager
+import at.reisisoft.sigui.download.DownloadProgressListener
 import at.reisisoft.sigui.settings.SiGuiSetting
-import at.reisisoft.ui.doLocalized
-import at.reisisoft.ui.getReplacedString
-import at.reisisoft.ui.runOnUiThread
+import at.reisisoft.ui.*
+import at.reisisoft.withChild
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import javafx.event.ActionEvent
+import javafx.event.EventHandler
 import javafx.fxml.FXML
-import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
 import javafx.scene.Parent
 import javafx.scene.Scene
@@ -222,6 +224,15 @@ class MainUIController : Initializable, AutoCloseable {
 
         //Setup update button
         updateListOfVersions.prefWidthProperty().bind(vBoxUpdate.widthProperty())
+
+        //Init download
+        cancelDownloads.onAction = EventHandler<ActionEvent> {
+            downloadManagerDelegate.let {
+                if (it.isInitialized()) {
+                    downloadManager.cancelAllDownloads()
+                }
+            }
+        }
     }
 
     private val executorServiceDelegate = lazy {
@@ -238,33 +249,83 @@ class MainUIController : Initializable, AutoCloseable {
 
     fun openOptionMenu(actionEvent: ActionEvent) {
         println("Open Options menu")
+        JavaFxUtils.loadFXML("optionUI.fxml").let { loader ->
+            loader.resources = localisationSupport
+            val parent: Parent = loader.load()
+            loader.getController<OptionUIController>()!!
+                .let controller@{ optionController ->
+                    optionController.internalInitialize(settings, executorService)
+                    Stage().apply {
+                        //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
+                        title = localisationSupport.getString(ResourceBundleUtils.OPTIONS_TITLE)
+                        scene = Scene(parent)
+                    }.showAndWait()
+                    optionController.updateSettings()
+                    return@controller optionController.settings
+                }.also { newSettings ->
+                    settings = newSettings
+                    executorService.submit { settings.persist() }
+                }
+        }
 
-        FXMLLoader().let { loader ->
-            MainUIController::class.java.classLoader.getResource("optionUI.fxml").let { fxml ->
-                loader.resources = localisationSupport
-                loader.location = fxml
-                val parent: Parent = loader.load()
-                loader.getController<OptionUIController>()!!
-                    .let controller@{ optionController ->
-                        optionController.internalInitialize(settings, executorService)
-                        Stage().apply {
-                            //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
-                            title = localisationSupport.getString(ResourceBundleUtils.OPTIONS_TITLE)
-                            scene = Scene(parent)
-                        }.showAndWait()
-                        optionController.updateSettings()
-                        return@controller optionController.settings
-                    }.also { newSettings ->
-                        settings = newSettings
-                        executorService.submit { settings.persist() }
+    }
+
+    fun openDownloadWindow(actionEvent: ActionEvent) {
+        println("Open download menu")
+        //Fetch data
+        val downloads = mapOf(LibreOfficeDownloadFileType.MAIN to "MAIN", LibreOfficeDownloadFileType.SDK to "SDK")
+        //Open
+        JavaFxUtils.loadFXML("downloadUi.fxml").apply { resources = localisationSupport }.let {
+            val parent: Parent = it.load()
+            it.getController<DownloadUiConroller>().let controller@{ controller ->
+                controller.setDownloads(downloads)
+                Stage().apply {
+                    title = localisationSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
+                    scene = Scene(parent)
+                }.showAndWait()
+                return@controller controller.downloads as Map<LibreOfficeDownloadFileType, String>
+            }.let { downloads ->
+                if (downloads.isNotEmpty())
+                    downloads.forEach { fileType, urlAsString ->
+                        urlAsString.substring(urlAsString.lastIndexOf('/') + 1).let { fileName ->
+                            URL(urlAsString).let { url ->
+                                downloadManager.addDownload(url, settings.downloadFolder withChild fileName, fileType)
+                            }
+                        }
                     }
             }
         }
+
     }
 
-    private val downloadManager: DownloadManager<LibreOfficeDownloadFileType> by lazy {
+    @FXML
+    private lateinit var downloadProgressBar: ProgressBar
+    @FXML
+    private lateinit var downloadProgressLabel: Label
+    @FXML
+    private lateinit var cancelDownloads: Button
+
+    val percentage100 = 100 * 100
+    private val downloadManagerDelegate = lazy {
         DownloadManager.getInstance<LibreOfficeDownloadFileType>(
             executorService
-        )
+        ).apply {
+            addDownloadProgressListener(object : DownloadProgressListener<LibreOfficeDownloadFileType> {
+                override fun onProgresUpdate(percentage: Double) = (percentage * 100).let { readablePercentage ->
+                    runOnUiThread {
+                        downloadProgressBar.progress = percentage
+                        downloadProgressLabel.text = readablePercentage.format(2)
+                    }
+                }
+
+                override fun onCompleted(downloadFinishedEvent: DownloadFinishedEvent<LibreOfficeDownloadFileType>) {
+                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                }
+
+                override fun onError(e: Exception) = showAlert(e)
+
+            })
+        }
     }
+    private val downloadManager: DownloadManager<LibreOfficeDownloadFileType> by downloadManagerDelegate
 }

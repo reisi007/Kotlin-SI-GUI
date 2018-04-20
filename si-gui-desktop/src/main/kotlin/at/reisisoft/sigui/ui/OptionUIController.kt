@@ -4,6 +4,7 @@ import at.reisisoft.sigui.OSUtils
 import at.reisisoft.sigui.commons.downloads.DownloadType
 import at.reisisoft.sigui.commons.downloads.PossibleDownloadHelper
 import at.reisisoft.sigui.settings.SiGuiSetting
+import at.reisisoft.ui.closeStageOnClick
 import at.reisisoft.ui.runOnUiThread
 import javafx.collections.FXCollections
 import javafx.event.ActionEvent
@@ -13,7 +14,6 @@ import javafx.fxml.Initializable
 import javafx.scene.control.Button
 import javafx.scene.control.ComboBox
 import javafx.scene.layout.FlowPane
-import javafx.stage.Stage
 import javafx.util.StringConverter
 import org.controlsfx.control.CheckComboBox
 import java.net.URL
@@ -61,6 +61,7 @@ class OptionUIController : Initializable {
     }
 
     private fun internalInitialize(executorService: ExecutorService) {
+        closeButton.closeStageOnClick()
         //Setup download tyes
         downloadTypesSelection.items.addAll(FXCollections.observableArrayList(OSUtils.CURRENT_OS.downloadTypesForOS()))
 
@@ -146,14 +147,6 @@ class OptionUIController : Initializable {
                     }
                 }
             }
-        }
-    }
-
-    fun onCloseRequested(actionEvent: ActionEvent) {
-        closeButton.scene.window.let {
-            if (it is Stage)
-                it.close()
-            else throw IllegalStateException()
         }
     }
 }

@@ -18,7 +18,7 @@
                 </Menu>
             </MenuBar>
         </HBox>
-        <HBox fillHeight="false" spacing="7.0">
+        <HBox fillHeight="false" prefHeight="200.0" prefWidth="553.0" spacing="7.0">
             <VBox fx:id="vBoxUpdate" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="182.0" spacing="7.0">
                 <Accordion fx:id="downloadAccordion" maxHeight="75.0" maxWidth="250.0" prefWidth="250.0"/>
                 <Button fx:id="updateListOfVersions" mnemonicParsing="false" onAction="#updateListOfDownloadVersions"
@@ -32,9 +32,21 @@
                     <Insets left="7.0" right="7.0"/>
                 </padding>
             </VBox>
-            <VBox>
-
+            <VBox prefHeight="200.0" prefWidth="235.0">
+                <HBox alignment="CENTER" prefHeight="42.0" prefWidth="263.0" spacing="3.0">
+                    <children>
+                        <ProgressBar fx:id="downloadProgressBar" prefHeight="28.0" prefWidth="104.0" progress="0.0"
+                                     HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="downloadProgressLabel" text="0.0%">
+                            <HBox.margin>
+                                <Insets left="4.0" right="4.0"/>
+                            </HBox.margin>
+                        </Label>
+                        <Button fx:id="cancelDownloads" mnemonicParsing="false" text="%cancel"/>
+                    </children>
+                </HBox>
             </VBox>
+            <VBox prefHeight="200.0" prefWidth="202.0"/>
         </HBox>
     </VBox>
 </AnchorPane>

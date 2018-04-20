@@ -61,3 +61,6 @@ fun <T : Comparable<T>> comparing(thiz: T, other: T, ifUndecideable: () -> Int):
             return@let result
         return@let ifUndecideable()
     }
+
+//https://stackoverflow.com/a/23088000/1870799
+fun Double.format(digits: Int): String = java.lang.String.format("%.${digits}f", this)

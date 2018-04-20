@@ -13,10 +13,12 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.*
+import kotlin.collections.HashMap
 
 internal data class SiGuiSetting(
     val downloadSelection: Pair<DownloadLocation, DownloadInformation?>? = null,
     val rootParallelInstallationFolder: Path = Files.createTempDirectory("si-gui"),
+    val downloadFolder: Path = Files.createTempDirectory("si-gui-downloads"),
     val installFileMain: Path? = null,
     val installFileHelp: Path? = null,
     val installFileSdk: Path? = null,
@@ -24,10 +26,13 @@ internal data class SiGuiSetting(
     val uiLanguage: Locale = Locale.getDefault(),
     val downloadTypes: List<DownloadType> = OSUtils.CURRENT_OS.downloadTypesForOS(),
     val downloadedVersions: Map<DownloadLocation, Set<DownloadInformation>> = emptyMap(),
-    val availableHpLanguages: Collection<Locale> = emptyList()
+    val availableHpLanguages: Collection<Locale> = emptyList(),
+    val managedInstalledVersions: Map<String/*Displayname*/, List<Path>/*List of files / folders, which should be deleted*/> = emptyMap()
 ) {
     internal fun persist() = storeSettings(this)
 }
+
+internal fun <K, V> Map<K, V>.asMutableMap(): MutableMap<K, V> = if (this is MutableMap<K, V>) this else HashMap(this)
 
 internal fun storeSettings(settings: SiGuiSetting): Unit = Files.newBufferedWriter(
     SETTINGS_PATH, DEFAULT_CHARSET, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
