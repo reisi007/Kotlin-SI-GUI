@@ -349,9 +349,9 @@ object PossibleDownloadHelper {
         }
 
 
-    val hpRegex by lazy { Regex("help.*?_(?<languageTag>[a-zA-Z]{1,3}(-[a-zA-Z]{1,3})?)") }
+    private val hpRegex by lazy { Regex("help.*?_(?<languageTag>[a-zA-Z]{1,3}(-[a-zA-Z]{1,3})?)") }
 
-    fun getHelppackLanguages(): Set<Locale> = getLocaleTreeSet().also { set ->
+    fun getHelppackLanguages(): Set<Locale> = newLocaleTreeSet().also { set ->
         parseHtmlDocument(DownloadUrls.HP_ENDPOINT).select("a[href~=help]").stream().map { it.attr("href") }
             .map { hpRegex.find(it) }.filter(Objects::nonNull).map { it!!.groups["languageTag"]!!.value }
             .map { Locale.forLanguageTag(it) }.forEach { set.add(it) }
@@ -372,6 +372,6 @@ object PossibleDownloadHelper {
 
 }
 
-fun getLocaleTreeSet(): TreeSet<Locale> =
+fun newLocaleTreeSet(): TreeSet<Locale> =
     TreeSet(Comparator<Locale> { o1, o2 -> comparing(o1.toLanguageTag(), o2.toLanguageTag()) { 0 } }
     )

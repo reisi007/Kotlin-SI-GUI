@@ -20,7 +20,7 @@ public class MainUI extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         SiGuiSetting settings = SettingsKt.loadSettings();
-        Locale.setDefault(Locale.forLanguageTag(settings.getUiLanguage()));
+        Locale.setDefault(settings.getUiLanguage());
         FXMLLoader loader = new FXMLLoader();
         URL uiDescription = MainUI.class.getClassLoader().getResource("mainUI.fxml");
         ResourceBundle languageSupport = ResourceBundle.getBundle("uistrings.sigui-desktop");
@@ -28,7 +28,7 @@ public class MainUI extends Application {
         loader.setLocation(uiDescription);
         Parent mainUi = loader.load();
         controller = loader.getController();
-        controller.internalSetSettings(settings);
+        controller.internalInitialize(settings);
         primaryStage.setScene(new Scene(mainUi));
         primaryStage.show();
     }

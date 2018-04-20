@@ -2,17 +2,23 @@ package at.reisisoft.sigui.ui
 
 import at.reisisoft.sigui.OSUtils
 import at.reisisoft.sigui.commons.downloads.DownloadType
+import at.reisisoft.sigui.commons.downloads.PossibleDownloadHelper
 import at.reisisoft.sigui.settings.SiGuiSetting
+import at.reisisoft.ui.runOnUiThread
 import javafx.collections.FXCollections
 import javafx.event.ActionEvent
+import javafx.event.EventHandler
+import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.Button
+import javafx.scene.control.ComboBox
 import javafx.scene.layout.FlowPane
 import javafx.stage.Stage
 import javafx.util.StringConverter
 import org.controlsfx.control.CheckComboBox
 import java.net.URL
 import java.util.*
+import java.util.concurrent.ExecutorService
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
@@ -20,21 +26,33 @@ class OptionUIController : Initializable {
 
     private lateinit var languageSupport: ResourceBundle
 
+
     internal lateinit var settings: SiGuiSetting
         private set
 
-    internal lateinit var closeButton: Button
+    @FXML
+    private lateinit var closeButton: Button
 
-    internal lateinit var optionHolder: FlowPane
+    @FXML
+    private lateinit var optionHolder: FlowPane
 
-    internal lateinit var downloadTypesSelection: CheckComboBox<DownloadType>
+    @FXML
+    private lateinit var downloadTypesSelection: CheckComboBox<DownloadType>
+
+    @FXML
+    private lateinit var helppackLanguages: ComboBox<Locale>
+    @FXML
+    private lateinit var updateHelppackLanguages: Button
+
+    @FXML
+    private lateinit var uiLang: ComboBox<Locale>
 
 
-    internal fun internalSetSettings(newSettings: SiGuiSetting) {
+    internal fun internalInitialize(newSettings: SiGuiSetting, executorService: ExecutorService) {
         if (!::settings.isInitialized) {
             settings = newSettings
             try {
-                internalInitialize()
+                internalInitialize(executorService)
             } catch (t: Throwable) {
                 println("Error on initialize!")
                 t.printStackTrace()
@@ -42,7 +60,8 @@ class OptionUIController : Initializable {
         }
     }
 
-    private fun internalInitialize() {
+    private fun internalInitialize(executorService: ExecutorService) {
+        //Setup download tyes
         downloadTypesSelection.items.addAll(FXCollections.observableArrayList(OSUtils.CURRENT_OS.downloadTypesForOS()))
 
         downloadTypesSelection.checkModel.let { selectionModel ->
@@ -64,6 +83,48 @@ class OptionUIController : Initializable {
             override fun fromString(string: String): DownloadType? = nameElementMap[string]
 
         }
+        //Setup helppack language
+        helppackLanguages.items.addAll(settings.availableHpLanguages)
+
+        helppackLanguages.selectionModel.apply {
+            select(settings.hpLanguage)
+            if (isEmpty)
+                selectFirst()
+        }
+
+
+        updateHelppackLanguages.onAction = EventHandler<ActionEvent> {
+            println("Refresh helppack languages clicked!")
+            executorService.submit {
+                PossibleDownloadHelper.getHelppackLanguages().let { hpLanguages ->
+                    settings = settings.copy(availableHpLanguages = hpLanguages)
+                    helppackLanguages.selectionModel.let { selectionModel ->
+                        runOnUiThread {
+                            selectionModel.selectedItem.let { selectedItem: Locale? ->
+                                helppackLanguages.items.let {
+                                    it.clear()
+                                    it.addAll(hpLanguages)
+                                    selectionModel.select(selectedItem)
+                                    if (selectionModel.isEmpty) {
+                                        selectionModel.selectFirst()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //Setup UI language
+        ResourceBundleUtils.getSupportedLanguages().let {
+            uiLang.items.addAll(it)
+            val selectLanguage = if (it.contains(settings.uiLanguage))
+                settings.uiLanguage
+            else Locale.forLanguageTag(EN_US)
+            uiLang.selectionModel.select(selectLanguage)
+
+        }
+
 
     }
 
@@ -75,7 +136,15 @@ class OptionUIController : Initializable {
         //Get all settings and update them -> store at the end
         settings = settings.let {
             ArrayList(downloadTypesSelection.checkModel.checkedItems).let { selectedDownloadTypes ->
-                it.copy(downloadTypes = selectedDownloadTypes)
+                uiLang.selectionModel.selectedItem.let { selectedUiLanguage ->
+                    helppackLanguages.selectionModel.selectedItem.let { selectedHpLanguage ->
+                        it.copy(
+                            downloadTypes = selectedDownloadTypes,
+                            hpLanguage = selectedHpLanguage,
+                            uiLanguage = selectedUiLanguage
+                        )
+                    }
+                }
             }
         }
     }

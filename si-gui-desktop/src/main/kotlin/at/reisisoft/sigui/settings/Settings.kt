@@ -21,10 +21,10 @@ internal data class SiGuiSetting(
     val installFileHelp: Path? = null,
     val installFileSdk: Path? = null,
     val hpLanguage: Locale? = null,
-    val uiLanguage: String = Locale.getDefault().toLanguageTag(),
+    val uiLanguage: Locale = Locale.getDefault(),
     val downloadTypes: List<DownloadType> = OSUtils.CURRENT_OS.downloadTypesForOS(),
     val downloadedVersions: Map<DownloadLocation, Set<DownloadInformation>> = emptyMap(),
-    val availableHpLanguages: List<Locale> = emptyList()
+    val availableHpLanguages: Collection<Locale> = emptyList()
 ) {
     internal fun persist() = storeSettings(this)
 }
@@ -50,19 +50,16 @@ internal val SETTINGS_PATH by lazy {
     Paths.get(SiGuiSetting::class.java.classLoader.getResource(".").toURI()) withChild "si-gui.settings.json"
 }
 
-private val JSON by lazy {
-    GsonBuilder().registerTypeHierarchyAdapter(
-        Path::class.java,
-        object : JsonDeserializer<Path>, JsonSerializer<Path> {
-            override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Path =
-                Paths.get(json.asString)
+private val JSON by lazy(GsonBuilder().registerTypeHierarchyAdapter(Path::class.java,
+    object : JsonDeserializer<Path>, JsonSerializer<Path> {
+        override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Path =
+            Paths.get(json.asString)
 
 
-            override fun serialize(src: Path, typeOfSrc: Type, context: JsonSerializationContext): JsonElement? =
-                src?.let { JsonPrimitive(it.toString()) }
-        }
-    ).create()
-}
+        override fun serialize(src: Path, typeOfSrc: Type, context: JsonSerializationContext): JsonElement =
+            JsonPrimitive(src.toString())
+    }
+)::create)
 
 //private val GSON:  by lazy { Gson() }
 

@@ -8,8 +8,8 @@ import at.reisisoft.ui.getReplacedString
 import at.reisisoft.ui.runOnUiThread
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
-import javafx.collections.FXCollections
 import javafx.event.ActionEvent
+import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
 import javafx.scene.Parent
@@ -25,18 +25,27 @@ import kotlin.collections.HashMap
 
 class MainUIController : Initializable, AutoCloseable {
 
-    internal lateinit var indicatorUpdateVersions: ProgressIndicator
-    internal lateinit var updateListOfVersions: Button
-    internal lateinit var downloadAccordion: Accordion
+    @FXML
+    private lateinit var indicatorUpdateVersions: ProgressIndicator
+    @FXML
+    private lateinit var updateListOfVersions: Button
+    @FXML
+    private lateinit var downloadAccordion: Accordion
     private lateinit var localisationSupport: ResourceBundle
-    internal lateinit var menuBar: MenuBar
-    internal lateinit var downloadLocationToNameMap: BiMap<DownloadLocation, String>
-    internal lateinit var accordionNameComboBoxMap: Map<String, ComboBox<DownloadInformation>>
-    internal lateinit var accordionNameTitlePaneMap: BiMap<String, TitledPane>
-    internal lateinit var vBoxUpdate: VBox
+    @FXML
+    private lateinit var menuBar: MenuBar
+    @FXML
+    private lateinit var downloadLocationToNameMap: BiMap<DownloadLocation, String>
+    @FXML
+    private lateinit var accordionNameComboBoxMap: Map<String, ComboBox<DownloadInformation>>
+    @FXML
+    private lateinit var accordionNameTitlePaneMap: BiMap<String, TitledPane>
+    @FXML
+    private lateinit var vBoxUpdate: VBox
+
     private lateinit var settings: SiGuiSetting
 
-    @JvmName("internalSetSettings")
+    @JvmName("internalInitialize")
     internal fun setSettings(newSettings: SiGuiSetting) {
         if (!::settings.isInitialized) {
             settings = newSettings
@@ -94,25 +103,24 @@ class MainUIController : Initializable, AutoCloseable {
         for (location in data.keys) {
             val uiText = downloadLocationToNameMap.getValue(location)
             accordionNameComboBoxMap[uiText]!!.let {
-                /*  it.items.let { items ->
-                      items.clear()
-                      items.addAll(data.getValue(location))
-                  }*/
                 runOnUiThread {
-                    it.items = FXCollections.observableArrayList(data.getValue(location))
+                    it.items.let { items ->
+                        items.clear()
+                        items.addAll(data.getValue(location))
+                    }
                 }
             }
-        }
-        //Update selection
-        downloadAccordion.expandedPane = accordionNameTitlePaneMap[selectedUiString]
-        accordionNameComboBoxMap[selectedUiString]!!.let { selectedComboBox ->
-            selectedComboBox.selectionModel.let { selectionModel ->
-                realCurrentSelection.second.let { selectedDlInfo ->
-                    runOnUiThread {
-                        if (selectedDlInfo == null)
-                            selectionModel.select(0)
-                        else
-                            selectionModel.select(selectedDlInfo)
+            //Update selection
+            downloadAccordion.expandedPane = accordionNameTitlePaneMap[selectedUiString]
+            accordionNameComboBoxMap[selectedUiString]!!.let { selectedComboBox ->
+                selectedComboBox.selectionModel.let { selectionModel ->
+                    realCurrentSelection.second.let { selectedDlInfo ->
+                        runOnUiThread {
+                            if (selectedDlInfo == null)
+                                selectionModel.select(0)
+                            else
+                                selectionModel.select(selectedDlInfo)
+                        }
                     }
                 }
             }
@@ -124,6 +132,7 @@ class MainUIController : Initializable, AutoCloseable {
                 settings = it
             }
         }
+
     }
 
     override fun initialize(location: URL, resources: ResourceBundle?) {
@@ -141,9 +150,9 @@ class MainUIController : Initializable, AutoCloseable {
 
         downloadLocationToNameMap = HashBiMap.create<DownloadLocation, String>().also {
             arrayOf(
-                DownloadLocation.STABLE to UiStrings.DOWNLOADLIST_NAMED,
-                DownloadLocation.DAILY to UiStrings.DOWNLOADLIST_DAILY,
-                DownloadLocation.ARCHIVE to UiStrings.DOWNLOADLIST_ARCHIVE
+                DownloadLocation.STABLE to ResourceBundleUtils.DOWNLOADLIST_NAMED,
+                DownloadLocation.DAILY to ResourceBundleUtils.DOWNLOADLIST_DAILY,
+                DownloadLocation.ARCHIVE to ResourceBundleUtils.DOWNLOADLIST_ARCHIVE
             ).forEach { (dlLocation, key) ->
                 localisationSupport.doLocalized(key) { localizedName ->
                     it.put(dlLocation, localizedName)
@@ -156,10 +165,14 @@ class MainUIController : Initializable, AutoCloseable {
                                 override fun toString(data: DownloadInformation?): String {
                                     var betterToString: String = data?.let {
                                         when {
-                                            it.displayName == "FRESH" -> localisationSupport.getString(UiStrings.DOWNLOADLIST_FRESH)
-                                            it.displayName == "STABLE" -> localisationSupport.getString(UiStrings.DOWNLOADLIST_STABLE)
+                                            it.displayName == "FRESH" -> localisationSupport.getString(
+                                                ResourceBundleUtils.DOWNLOADLIST_FRESH
+                                            )
+                                            it.displayName == "STABLE" -> localisationSupport.getString(
+                                                ResourceBundleUtils.DOWNLOADLIST_STABLE
+                                            )
                                             it.displayName.startsWith("TESTING") -> localisationSupport.getReplacedString(
-                                                UiStrings.DOWNLOADLIST_TESTING,
+                                                ResourceBundleUtils.DOWNLOADLIST_TESTING,
                                                 it.displayName.let {
                                                     it.lastIndexOf(' ').let { offset ->
                                                         it.substring(offset + 1)
@@ -233,10 +246,10 @@ class MainUIController : Initializable, AutoCloseable {
                 val parent: Parent = loader.load()
                 loader.getController<OptionUIController>()!!
                     .let controller@{ optionController ->
-                        optionController.internalSetSettings(settings)
+                        optionController.internalInitialize(settings, executorService)
                         Stage().apply {
                             //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
-                            title = localisationSupport.getString(UiStrings.OPTIONS_TITLE)
+                            title = localisationSupport.getString(ResourceBundleUtils.OPTIONS_TITLE)
                             scene = Scene(parent)
                         }.showAndWait()
                         optionController.updateSettings()
