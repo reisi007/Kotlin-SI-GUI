@@ -4,6 +4,7 @@ import at.reisisoft.sigui.commons.downloads.LibreOfficeDownloadFileType
 import at.reisisoft.ui.closeStageOnClick
 import at.reisisoft.ui.closeStageOnClickAction
 import at.reisisoft.ui.doLocalizedReplace
+import at.reisisoft.ui.preferWindowSize
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXML
@@ -12,6 +13,7 @@ import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.HBox
+import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import java.net.URL
 import java.nio.file.Path
@@ -39,6 +41,8 @@ class DownloadUiConroller : Initializable {
     private lateinit var urlLabel: Label
     @FXML
     private lateinit var pathLabel: Label
+    @FXML
+    private lateinit var rootPane: Pane
 
     fun setDownloads(downloads: Map<LibreOfficeDownloadFileType, String>, baseUrl: String, downloadPath: Path) {
         if (alreadyInitialized)
@@ -60,6 +64,7 @@ class DownloadUiConroller : Initializable {
     }
 
     private fun internalInitialize() {
+        rootPane.preferWindowSize()
         startDl.closeStageOnClick()
         abort.onAction = EventHandler<ActionEvent> {
             downloads.clear()

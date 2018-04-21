@@ -2,12 +2,19 @@ package at.reisisoft.ui
 
 
 import javafx.application.Platform
+import javafx.beans.binding.DoubleExpression
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.scene.control.Alert
 import javafx.scene.control.Button
 import javafx.scene.control.ButtonType
+import javafx.scene.layout.Pane
+import javafx.stage.DirectoryChooser
+import javafx.stage.FileChooser
 import javafx.stage.Stage
+import javafx.stage.Window
+import java.nio.file.Path
+import java.nio.file.Paths
 
 fun runOnUiThread(action: () -> Unit): Unit = Platform.runLater(action)
 
@@ -32,3 +39,29 @@ internal fun showAlert(errorMessage: String, alertType: Alert.AlertType = Alert.
 }
 
 internal fun showWarning(warningMessage: String) = showAlert(warningMessage, Alert.AlertType.WARNING)
+
+internal fun Window.showDirectoryChooser(titleString: String, initalPath: Path = Paths.get(".")): Path? =
+    DirectoryChooser().apply {
+        title = titleString
+        initialDirectory = initalPath.toFile()
+    }.showDialog(this)?.toPath()
+
+internal fun Window.showFileChooser(
+    titleString: String,
+    initialPath: Path,
+    vararg extensionFilers: FileChooser.ExtensionFilter
+): Path? = FileChooser().apply {
+    title = titleString
+    initialDirectory = initialPath.toFile()
+    this.extensionFilters.addAll(*extensionFilers)
+}.showOpenDialog(this)?.toPath()
+
+operator fun DoubleExpression.times(double: Double): DoubleExpression = this.multiply(double)
+operator fun DoubleExpression.times(int: Int): DoubleExpression = this.multiply(int)
+
+internal fun Pane.preferWindowSize() {
+    sceneProperty().addListener { _, _, scene ->
+        prefWidthProperty().bind(scene.widthProperty())
+        prefHeightProperty().bind(scene.heightProperty())
+    }
+}

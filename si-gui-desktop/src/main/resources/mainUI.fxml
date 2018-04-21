@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
+<AnchorPane prefHeight="300.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.MainUIController">
-    <VBox prefHeight="400.0" prefWidth="600.0" spacing="7.0">
-        <HBox fillHeight="false">
-            <MenuBar fx:id="menuBar" focusTraversable="true" HBox.hgrow="ALWAYS">
+    <BorderPane fx:id="rootPane" prefHeight="300.0" prefWidth="700.0">
+        <top>
+            <MenuBar fx:id="menuBar" focusTraversable="true" BorderPane.alignment="CENTER">
                 <Menu text="SI-GUI">
                     <MenuItem fx:id="m_options" onAction="#openOptionMenu" text="%options.title"/>
                 </Menu>
@@ -17,36 +17,44 @@
                     <MenuItem fx:id="m_about" text="About"/>
                 </Menu>
             </MenuBar>
-        </HBox>
-        <HBox fillHeight="false" prefHeight="200.0" prefWidth="553.0" spacing="7.0">
-            <VBox fx:id="vBoxUpdate" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="182.0" spacing="7.0">
-                <Accordion fx:id="downloadAccordion" maxHeight="75.0" maxWidth="250.0" prefWidth="250.0"/>
-                <Button fx:id="updateListOfVersions" mnemonicParsing="false" onAction="#updateListOfDownloadVersions"
-                        text="%downloadlist.update"/>
-                <ProgressIndicator fx:id="indicatorUpdateVersions" visible="false">
-                    <VBox.margin>
-                        <Insets bottom="4.0" top="4.0"/>
-                    </VBox.margin>
-                </ProgressIndicator>
-                <Button fx:id="startdlButton" mnemonicParsing="false" onAction="#openDownloadMenu"
-                        text="%downloader.startdl"/>
-                <padding>
-                    <Insets left="7.0" right="7.0"/>
-                </padding>
-            </VBox>
-            <VBox prefHeight="200.0" prefWidth="235.0">
-                <HBox alignment="CENTER" prefHeight="42.0" prefWidth="263.0" spacing="3.0">
-                    <ProgressBar fx:id="downloadProgressBar" prefHeight="28.0" prefWidth="104.0" progress="0.0"
-                                 HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="downloadProgressLabel" text="0.0%">
-                        <HBox.margin>
-                            <Insets left="4.0" right="4.0"/>
-                        </HBox.margin>
-                    </Label>
-                    <Button fx:id="cancelDownloads" mnemonicParsing="false" text="%cancel"/>
-                </HBox>
-            </VBox>
-            <VBox prefHeight="200.0" prefWidth="202.0"/>
-        </HBox>
-    </VBox>
+        </top>
+        <center>
+            <HBox fillHeight="false" prefHeight="200.0" prefWidth="595.0" spacing="7.0" BorderPane.alignment="CENTER">
+                <VBox fx:id="vBoxUpdate" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="182.0" spacing="7.0">
+                    <Accordion fx:id="downloadAccordion" maxHeight="75.0" maxWidth="250.0" prefWidth="250.0"/>
+                    <Button fx:id="updateListOfVersions" mnemonicParsing="false"
+                            onAction="#updateListOfDownloadVersions" text="%downloadlist.update"/>
+                    <ProgressIndicator fx:id="indicatorUpdateVersions" minHeight="80.0" visible="false">
+                        <VBox.margin>
+                            <Insets bottom="4.0" top="4.0"/>
+                        </VBox.margin>
+                    </ProgressIndicator>
+                    <Button fx:id="startdlButton" mnemonicParsing="false" onAction="#openDownloadMenu"
+                            text="%downloader.startdl"/>
+                    <padding>
+                        <Insets left="7.0" right="7.0"/>
+                    </padding>
+                </VBox>
+                <VBox prefHeight="200.0" prefWidth="235.0">
+                    <HBox alignment="CENTER" prefHeight="42.0" prefWidth="263.0" spacing="3.0">
+                        <ProgressBar fx:id="downloadProgressBar" prefHeight="28.0" prefWidth="104.0" progress="0.0"
+                                     HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="downloadProgressLabel" text="0.0%">
+                            <HBox.margin>
+                                <Insets left="4.0" right="4.0"/>
+                            </HBox.margin>
+                        </Label>
+                        <Button fx:id="cancelDownloads" mnemonicParsing="false" text="%cancel"/>
+                    </HBox>
+                </VBox>
+                <VBox prefHeight="200.0" prefWidth="202.0"/>
+                <opaqueInsets>
+                    <Insets/>
+                </opaqueInsets>
+                <BorderPane.margin>
+                    <Insets top="7.0"/>
+                </BorderPane.margin>
+            </HBox>
+        </center>
+    </BorderPane>
 </AnchorPane>

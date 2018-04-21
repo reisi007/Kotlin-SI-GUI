@@ -4,8 +4,7 @@ import at.reisisoft.sigui.OSUtils
 import at.reisisoft.sigui.commons.downloads.DownloadType
 import at.reisisoft.sigui.commons.downloads.PossibleDownloadHelper
 import at.reisisoft.sigui.settings.SiGuiSetting
-import at.reisisoft.ui.closeStageOnClick
-import at.reisisoft.ui.runOnUiThread
+import at.reisisoft.ui.*
 import javafx.collections.FXCollections
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
@@ -13,10 +12,13 @@ import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.Button
 import javafx.scene.control.ComboBox
+import javafx.scene.control.Label
 import javafx.scene.layout.FlowPane
+import javafx.scene.layout.Pane
 import javafx.util.StringConverter
 import org.controlsfx.control.CheckComboBox
 import java.net.URL
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ExecutorService
 import kotlin.collections.ArrayList
@@ -46,6 +48,20 @@ class OptionUIController : Initializable {
 
     @FXML
     private lateinit var uiLang: ComboBox<Locale>
+    @FXML
+    private lateinit var downloadFolderText: Label
+    @FXML
+    private lateinit var downloadFolderButton: Button
+    @FXML
+    private lateinit var installFolderText: Label
+    @FXML
+    private lateinit var installFolderButton: Button
+    @FXML
+    private lateinit var installFolderLabel: Label
+    @FXML
+    private lateinit var downloadFolderLabel: Label
+    @FXML
+    private lateinit var rootLayout: Pane
 
 
     internal fun internalInitialize(newSettings: SiGuiSetting, executorService: ExecutorService) {
@@ -61,6 +77,8 @@ class OptionUIController : Initializable {
     }
 
     private fun internalInitialize(executorService: ExecutorService) {
+        rootLayout.preferWindowSize()
+
         closeButton.closeStageOnClick()
         //Setup download tyes
         downloadTypesSelection.items.addAll(FXCollections.observableArrayList(OSUtils.CURRENT_OS.downloadTypesForOS()))
@@ -123,9 +141,39 @@ class OptionUIController : Initializable {
                 settings.uiLanguage
             else Locale.forLanguageTag(EN_US)
             uiLang.selectionModel.select(selectLanguage)
-
         }
 
+        //Setup download location
+        downloadFolderButton.onAction = EventHandler {
+            downloadFolderButton.scene.window.showDirectoryChooser(
+                languageSupport.getString(ResourceBundleUtils.OPTIONS_OPENFOLDER),
+                Paths.get(downloadFolderText.text)
+            )?.let { path ->
+                downloadFolderText.text = path.toString()
+            }
+        }
+
+        downloadFolderText.text = settings.downloadFolder.toString()
+        downloadFolderLabel.text = languageSupport.getString(ResourceBundleUtils.OPTIONS_DOWNLOADFOLDER)
+
+
+        //Setup installation folder
+        installFolderButton.onAction = EventHandler {
+            installFolderButton.scene.window.showDirectoryChooser(
+                languageSupport.getString(ResourceBundleUtils.OPTIONS_OPENFOLDER),
+                Paths.get(installFolderText.text)
+            )?.let { path ->
+                installFolderText.text = path.toString()
+            }
+        }
+
+        installFolderText.text = settings.rootInstallationFolder.toString()
+        installFolderLabel.text = languageSupport.getString(ResourceBundleUtils.OPTIONS_ROOTINSTALLFOLDER)
+
+        //Elements, whose width should be restricted to 40% of available width
+        arrayOf(installFolderLabel, installFolderText, downloadFolderLabel, downloadFolderText).forEach {
+            it.prefWidthProperty().bind(rootLayout.widthProperty() * 0.35)
+        }
 
     }
 
@@ -133,17 +181,28 @@ class OptionUIController : Initializable {
         languageSupport = resources!!
     }
 
+    /**
+     * Always update this function if settings are added. This functions get all settings from the UI.
+     *
+     * Updates the stored settings
+     */
     fun updateSettings() {
         //Get all settings and update them -> store at the end
         settings = settings.let {
             ArrayList(downloadTypesSelection.checkModel.checkedItems).let { selectedDownloadTypes ->
                 uiLang.selectionModel.selectedItem.let { selectedUiLanguage ->
                     helppackLanguages.selectionModel.selectedItem.let { selectedHpLanguage ->
-                        it.copy(
-                            downloadTypes = selectedDownloadTypes,
-                            hpLanguage = selectedHpLanguage,
-                            uiLanguage = selectedUiLanguage
-                        )
+                        Paths.get(downloadFolderText.text).let { newDownloadFolder ->
+                            Paths.get(installFolderText.text).let { newInstallationFolder ->
+                                it.copy(
+                                    downloadTypes = selectedDownloadTypes,
+                                    hpLanguage = selectedHpLanguage,
+                                    uiLanguage = selectedUiLanguage,
+                                    intDownloadFolder = newDownloadFolder,
+                                    intRootInstallationFolder = newInstallationFolder
+                                )
+                            }
+                        }
                     }
                 }
             }

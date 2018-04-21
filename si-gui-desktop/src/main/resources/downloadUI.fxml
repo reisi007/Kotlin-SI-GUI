@@ -3,9 +3,9 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane prefHeight="200.0" prefWidth="550.0" xmlns="http://javafx.com/javafx/8.0.121"
+<AnchorPane prefHeight="200.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.DownloadUiConroller">
-    <BorderPane prefHeight="200.0" prefWidth="550.0">
+    <BorderPane fx:id="rootPane" prefHeight="200.0" prefWidth="650.0">
         <top>
             <VBox spacing="7">
                 <Label fx:id="urlLabel" text="Set by code" BorderPane.alignment="CENTER"/>

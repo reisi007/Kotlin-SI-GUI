@@ -17,6 +17,7 @@ import javafx.fxml.Initializable
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.control.*
+import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import javafx.util.StringConverter
@@ -47,6 +48,8 @@ class MainUIController : Initializable, AutoCloseable {
     private lateinit var vBoxUpdate: VBox
     @FXML
     private lateinit var startdlButton: Button
+    @FXML
+    private lateinit var rootPane: Pane
 
     private lateinit var settings: SiGuiSetting
 
@@ -156,6 +159,7 @@ class MainUIController : Initializable, AutoCloseable {
      * This is called when [setSettings] is called for the first time
      */
     private fun internalInitialize() {
+        rootPane.preferWindowSize()
         //Setup accordion
         val tmpChoiceBoxMap: BiMap<String, ComboBox<DownloadInformation>> = HashBiMap.create()
         val tmpTitlePaneMap: BiMap<String, TitledPane> = HashBiMap.create()
