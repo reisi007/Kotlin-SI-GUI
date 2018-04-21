@@ -18,9 +18,12 @@ internal object ResourceBundleUtils {
     private val DOWNLAODER = "downloader"
     val DOWNLOADER_TITLE = "$DOWNLAODER.title"
     val DOWNLAODER_DOWNLOAD_FROM = "$DOWNLAODER.downloadfrom"
+    val DOWNLAODER_DOWNLOAD_TO = "$DOWNLAODER.downloadto"
     val OPENFILE = "openfile"
     val MAIN_TITLE = "main.title"
     val CANCEL = "cancel"
+    private val ERROR = "error"
+    val ERROR_FILEEXISRS = "$ERROR.fileexists"
 
     internal fun getSupportedLanguages(): Set<Locale> =
         newLocaleTreeSet().apply { add(Locale.forLanguageTag(EN_US)) }.apply {

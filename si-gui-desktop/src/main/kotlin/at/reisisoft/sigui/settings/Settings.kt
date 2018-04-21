@@ -6,6 +6,7 @@ import at.reisisoft.sigui.commons.downloads.DownloadLocation
 import at.reisisoft.sigui.commons.downloads.DownloadType
 import at.reisisoft.withChild
 import com.google.gson.*
+import com.google.gson.annotations.SerializedName
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -17,8 +18,10 @@ import kotlin.collections.HashMap
 
 internal data class SiGuiSetting(
     val downloadSelection: Pair<DownloadLocation, DownloadInformation?>? = null,
-    val rootParallelInstallationFolder: Path = Files.createTempDirectory("si-gui"),
-    val downloadFolder: Path = Files.createTempDirectory("si-gui-downloads"),
+    @SerializedName("rootInstallationFolder")
+    private var intRootInstallationFolder: Path? = null,
+    @SerializedName("downloadFolder")
+    private var intDownloadFolder: Path? = null,
     val installFileMain: Path? = null,
     val installFileHelp: Path? = null,
     val installFileSdk: Path? = null,
@@ -30,6 +33,20 @@ internal data class SiGuiSetting(
     val managedInstalledVersions: Map<String/*Displayname*/, List<Path>/*List of files / folders, which should be deleted*/> = emptyMap()
 ) {
     internal fun persist() = storeSettings(this)
+
+    val downloadFolder: Path
+        get() {
+            if (intDownloadFolder == null)
+                intDownloadFolder = Files.createTempDirectory("si-gui-download")
+
+            return intDownloadFolder!!
+        }
+    val rootInstallationFolder: Path
+        get() {
+            if (intRootInstallationFolder == null)
+                intRootInstallationFolder = Files.createTempDirectory("si-gui-installs")
+            return intRootInstallationFolder!!
+        }
 }
 
 internal fun <K, V> Map<K, V>.asMutableMap(): MutableMap<K, V> = if (this is MutableMap<K, V>) this else HashMap(this)
@@ -65,7 +82,5 @@ private val JSON by lazy(GsonBuilder().registerTypeHierarchyAdapter(Path::class.
             JsonPrimitive(src.toString())
     }
 )::create)
-
-//private val GSON:  by lazy { Gson() }
 
 private val DEFAULT_CHARSET = StandardCharsets.UTF_8!!

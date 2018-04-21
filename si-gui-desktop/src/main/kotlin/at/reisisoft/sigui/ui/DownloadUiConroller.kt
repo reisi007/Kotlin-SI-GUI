@@ -14,15 +14,18 @@ import javafx.scene.control.Label
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import java.net.URL
+import java.nio.file.Path
 import java.util.*
 
 class DownloadUiConroller : Initializable {
 
-    private lateinit var languageSupport: ResourceBundle
+    protected lateinit var languageSupport: ResourceBundle
 
     val downloads: EnumMap<LibreOfficeDownloadFileType, String> =
         EnumMap(LibreOfficeDownloadFileType::class.java)
+
     private lateinit var baseUrl: String
+    private lateinit var downloadPath: Path
 
     private var alreadyInitialized = false
 
@@ -34,13 +37,16 @@ class DownloadUiConroller : Initializable {
     private lateinit var toFill: VBox
     @FXML
     private lateinit var urlLabel: Label
+    @FXML
+    private lateinit var pathLabel: Label
 
-    fun setDownloads(downloads: Map<LibreOfficeDownloadFileType, String>, baseUrl: String) {
+    fun setDownloads(downloads: Map<LibreOfficeDownloadFileType, String>, baseUrl: String, downloadPath: Path) {
         if (alreadyInitialized)
             throw IllegalStateException("Controler has already been initialized")
         alreadyInitialized = true
         this.downloads.putAll(downloads)
         this.baseUrl = baseUrl
+        this.downloadPath = downloadPath
         try {
             internalInitialize()
         } catch (t: Throwable) {
@@ -63,6 +69,9 @@ class DownloadUiConroller : Initializable {
         languageSupport.doLocalizedReplace(ResourceBundleUtils.DOWNLAODER_DOWNLOAD_FROM, baseUrl) { finalString ->
             urlLabel.text = finalString
         }
+        languageSupport.doLocalizedReplace(ResourceBundleUtils.DOWNLAODER_DOWNLOAD_TO, downloadPath) { finalString ->
+            pathLabel.text = finalString
+        }
 
         val cancel = languageSupport.getString(ResourceBundleUtils.CANCEL)
         downloads.forEach { type, fileName ->
@@ -70,6 +79,7 @@ class DownloadUiConroller : Initializable {
                 spacing = 10.0
                 alignment = Pos.CENTER_RIGHT
                 toFill.children.add(this)
+                prefWidthProperty().bind(toFill.widthProperty())
             }.let { container ->
                 container.children.let { children ->
                     Label().apply {

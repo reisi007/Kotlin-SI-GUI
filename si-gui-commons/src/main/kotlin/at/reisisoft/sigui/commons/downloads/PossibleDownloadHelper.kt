@@ -62,7 +62,7 @@ object PossibleDownloadHelper {
                             .let { versionInfo ->
                                 downloadVersionInfo.addAll(
                                     getCorrectBaseUrlForOS(
-                                        baseUrlDocument.location(),
+                                        "${baseUrlDocument.location()}$versionInfo/",
                                         versionInfo,
                                         ArrayList<DownloadType>().also {
                                             //Add Support information
@@ -314,7 +314,7 @@ object PossibleDownloadHelper {
         fileTypes: Set<LibreOfficeDownloadFileType>,
         hpLanguage: String
     ): Map<LibreOfficeDownloadFileType, String> =
-        parseHtmlDocument(baseUrl).let { rootDocument ->
+        parseHtmlDocument(baseUrl, 3000).let { rootDocument ->
             if (fileTypes.contains(LibreOfficeDownloadFileType.HP) && hpLanguage == ".")
                 throw IllegalStateException("Helppack language is needed!")
             val regexMap: Map<LibreOfficeDownloadFileType, Predicate<String>> =
@@ -365,19 +365,20 @@ object PossibleDownloadHelper {
             .map { Locale.forLanguageTag(it) }.forEach { set.add(it) }
     }
 
-    private fun parseHtmlDocument(urlAsString: String): Document = getJsoupResponse(urlAsString).parse()
+    private fun parseHtmlDocument(urlAsString: String, connectionTimeout: Int = 10000/*10 seconds*/): Document =
+        getJsoupResponse(urlAsString).parse()
 
-    private fun getJsoupResponse(urlAsString: String): Connection.Response =
+    private fun getJsoupResponse(
+        urlAsString: String,
+        connectionTimeout: Int = 10000/*10 seconds*/
+    ): Connection.Response =
         try {
-            Jsoup.connect(urlAsString).timeout(CONNECTION_TIMEOUT).execute()
+            Jsoup.connect(urlAsString).timeout(connectionTimeout).execute()
         } catch (ste: SocketTimeoutException) {
             System.err.println("Exception for $urlAsString")
             System.err.println()
             throw ste
         }
-
-    private const val CONNECTION_TIMEOUT = 10000//10 seconds
-
 }
 
 fun newLocaleTreeSet(): TreeSet<Locale> =

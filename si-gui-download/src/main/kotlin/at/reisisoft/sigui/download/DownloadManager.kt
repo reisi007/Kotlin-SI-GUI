@@ -1,5 +1,6 @@
 package at.reisisoft.sigui.download;
 
+import java.io.BufferedInputStream
 import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
@@ -9,6 +10,7 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import javax.net.ssl.HttpsURLConnection
 
 data class DownloadFinishedEvent<Custom>(val file: Path, val customData: Custom)
 
@@ -31,22 +33,28 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
 
     override fun addDownload(from: URL, to: Path, customData: T) {
         activeDownloads += executorService.submit {
-            var continueDownlaod = true
             var currentFileProgress = 0L
+            var continueDownload = true
             from.openConnection().let { connection ->
                 connection.contentLengthLong.let { downloadSize ->
                     progressUpdate(0, downloadSize)
                     try {
                         connection.connect()
-                        connection.getInputStream().use { input ->
+                        if (connection is HttpsURLConnection) {
+                            connection.inputStream.buffered()
+                        }
+                        val BUFFER_SIZE = 1024 * 32
+                        connection.getInputStream().let { BufferedInputStream(it, BUFFER_SIZE) }.use { input ->
                             Files.newOutputStream(to, StandardOpenOption.CREATE_NEW).let { output ->
-                                val buffer = ByteArray(1021 * 1024)
-                                while (continueDownlaod) {
+                                val buffer = ByteArray(BUFFER_SIZE)
+                                while (continueDownload) {
                                     input.read(buffer).let { readBytes ->
-                                        currentFileProgress += readBytes
-                                        continueDownlaod = buffer.size == readBytes
-                                        output.write(buffer, 0, readBytes)
-                                        progressUpdate(readBytes.toLong())
+                                        if (readBytes >= 0) {
+                                            currentFileProgress += readBytes
+                                            output.write(buffer, 0, readBytes)
+                                            progressUpdate(readBytes.toLong())
+                                        } else
+                                            continueDownload = false
                                     }
                                 }
                                 progressUpdate(-downloadSize, -downloadSize)
@@ -57,6 +65,7 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
                         }
                     } catch (e: IOException) {
                         progressUpdate(-currentFileProgress, -downloadSize)
+                        processException(e)
                         throw e;
                     }
                 }
@@ -64,12 +73,14 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
         }
     }
 
+    private fun processException(e: Exception) = listeners.forEach { it.onError(e) }
+
     private var totalBytes = 0L
     private var doneBytes = 0L
     private fun progressUpdate(addDoneBytes: Long, addTotalBytes: Long = 0): Unit = synchronized(this) {
         doneBytes += addDoneBytes
         totalBytes += addTotalBytes
-        (doneBytes.toDouble() / totalBytes).let { currentProgress ->
+        (if (totalBytes == 0L) 0.0 else (doneBytes.toDouble() / totalBytes)).let { currentProgress ->
             listeners.forEach { it.onProgresUpdate(currentProgress) }
         }
     }
@@ -77,11 +88,11 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
     private val listeners: MutableList<DownloadProgressListener<T>> = ArrayList()
 
     override fun addDownloadProgressListener(listener: DownloadProgressListener<T>) {
-        listeners -= listener
+        listeners += listener
     }
 
     override fun removeDownloadProgressListener(listener: DownloadProgressListener<T>) {
-        listeners += listener
+        listeners -= listener
     }
 
     override fun cancelAllDownloads() {

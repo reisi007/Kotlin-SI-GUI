@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ButtonBar?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <AnchorPane prefHeight="200.0" prefWidth="550.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.DownloadUiConroller">
     <BorderPane prefHeight="200.0" prefWidth="550.0">
         <top>
-            <Label fx:id="urlLabel" text="Set by code" BorderPane.alignment="CENTER"/>
+            <VBox spacing="7">
+                <Label fx:id="urlLabel" text="Set by code" BorderPane.alignment="CENTER"/>
+                <Label fx:id="pathLabel" text="Set by code" BorderPane.alignment="CENTER"/>
+            </VBox>
         </top>
         <bottom>
             <ButtonBar BorderPane.alignment="CENTER">

@@ -21,6 +21,7 @@ import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import javafx.util.StringConverter
 import java.net.URL
+import java.nio.file.FileAlreadyExistsException
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.HashMap
@@ -39,7 +40,7 @@ class MainUIController : Initializable, AutoCloseable {
     @FXML
     private lateinit var downloadLocationToNameMap: BiMap<DownloadLocation, String>
     @FXML
-    private lateinit var accordionNameComboBoxMap: Map<String, ComboBox<DownloadInformation>>
+    private lateinit var accordionNameComboBoxMap: BiMap<String, ComboBox<DownloadInformation>>
     @FXML
     private lateinit var accordionNameTitlePaneMap: BiMap<String, TitledPane>
     @FXML
@@ -98,8 +99,7 @@ class MainUIController : Initializable, AutoCloseable {
                         choiceBox.selectionModel.selectedItem?.let { selectedItem: DownloadInformation ->
                             location to selectedItem
                         } ?: kotlin.run {
-                            choiceBox.selectionModel.selectFirst()
-                            location to choiceBox.selectionModel.selectedItem
+                            location to choiceBox.items.firstOrNull()
                         }
                     }
                 }
@@ -117,29 +117,34 @@ class MainUIController : Initializable, AutoCloseable {
                     }
                 }
             }
-            //Update selection
-            downloadAccordion.expandedPane = accordionNameTitlePaneMap[selectedUiString]
-            accordionNameComboBoxMap[selectedUiString]!!.let { selectedComboBox ->
-                selectedComboBox.selectionModel.let { selectionModel ->
-                    realCurrentSelection.second.let { selectedDlInfo ->
-                        runOnUiThread {
-                            if (selectedDlInfo == null)
-                                selectionModel.select(0)
-                            else
-                                selectionModel.select(selectedDlInfo)
+        }
+        //Update selection
+        downloadAccordion.expandedPane = accordionNameTitlePaneMap[selectedUiString]
+
+        accordionNameComboBoxMap[selectedUiString]!!.let { selectedComboBox ->
+            selectedComboBox.selectionModel.let { selectionModel ->
+                realCurrentSelection.second.let { selectedDlInfo ->
+                    runOnUiThread {
+                        val nextSelectedItem = selectedDlInfo?.let { old ->
+                            selectedComboBox.items.find { it.displayName == old.displayName }
+                        } ?: selectedComboBox.items.firstOrNull() //null if list is empty
+
+                        selectionModel.select(nextSelectedItem)
+
+                        val selectionToStore =
+                            realCurrentSelection.first to nextSelectedItem
+
+                        //Persist settings
+                        settings = settings.copy(downloadedVersions = data, downloadSelection = selectionToStore).also {
+                            if (storeSettings) {
+                                it.asyncPersist()
+                                settings = it
+                            }
                         }
                     }
                 }
             }
         }
-        //Persist settings
-        settings.copy(downloadedVersions = data, downloadSelection = realCurrentSelection).let {
-            if (storeSettings) {
-                it.persist()
-                settings = it
-            }
-        }
-
     }
 
     override fun initialize(location: URL, resources: ResourceBundle?) {
@@ -152,7 +157,7 @@ class MainUIController : Initializable, AutoCloseable {
      */
     private fun internalInitialize() {
         //Setup accordion
-        val tmpChoiceBoxMap: MutableMap<String, ComboBox<DownloadInformation>> = HashMap()
+        val tmpChoiceBoxMap: BiMap<String, ComboBox<DownloadInformation>> = HashBiMap.create()
         val tmpTitlePaneMap: BiMap<String, TitledPane> = HashBiMap.create()
 
         downloadLocationToNameMap = HashBiMap.create<DownloadLocation, String>().also {
@@ -214,6 +219,14 @@ class MainUIController : Initializable, AutoCloseable {
                             it.prefWidthProperty().bind(downloadAccordion.widthProperty())
                             it.converter = converter
 
+                            it.selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                                accordionNameComboBoxMap.inverse().getValue(it).let { uiString ->
+                                    downloadLocationToNameMap.inverse().getValue(uiString)
+                                }?.let {
+                                    updateSelection(it, newValue)
+                                }
+                            }
+
                         }).also {
                             tmpTitlePaneMap.put(localizedName, it)
                         })
@@ -225,7 +238,7 @@ class MainUIController : Initializable, AutoCloseable {
         accordionNameComboBoxMap = tmpChoiceBoxMap
         accordionNameTitlePaneMap = tmpTitlePaneMap
 
-        updateAccordion(settings.downloadedVersions, settings.downloadSelection, false)
+        updateAccordion(settings.downloadedVersions, settings.downloadSelection)
 
         //Setup update button
         updateListOfVersions.prefWidthProperty().bind(vBoxUpdate.widthProperty())
@@ -271,7 +284,7 @@ class MainUIController : Initializable, AutoCloseable {
                     return@controller optionController.settings
                 }.also { newSettings ->
                     settings = newSettings
-                    executorService.submit { settings.persist() }
+                    executorService.submit { settings.asyncPersist() }
                 }
         }
 
@@ -297,21 +310,20 @@ class MainUIController : Initializable, AutoCloseable {
                         JavaFxUtils.loadFXML("downloadUI.fxml").let {
                             it.resources = localisationSupport
                             val parent: Parent = it.load()
-                            it.getController<DownloadUiConroller>().let controller@{ controller ->
-                                controller.setDownloads(downloads, information.baseUrl)
-                                runOnUiThread {
+                            runOnUiThread {
+                                it.getController<DownloadUiConroller>().let controller@{ controller ->
+                                    controller.setDownloads(downloads, information.baseUrl, settings.downloadFolder)
                                     Stage().apply {
                                         title = localisationSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
                                         scene = Scene(parent)
                                     }.showAndWait()
-                                }
-                                downloadWindowsOpenTaskStarted = false
-                                return@controller controller.downloads as Map<LibreOfficeDownloadFileType, String>
-                            }.let { downloads ->
-                                if (downloads.isNotEmpty())
-                                    downloads.forEach { fileType, urlAsString ->
-                                        urlAsString.substring(urlAsString.lastIndexOf('/') + 1).let { fileName ->
-                                            URL(urlAsString).let { url ->
+
+                                    downloadWindowsOpenTaskStarted = false
+                                    controller.downloads as Map<LibreOfficeDownloadFileType, String>
+                                }.let { downloads ->
+                                    if (downloads.isNotEmpty())
+                                        downloads.forEach { fileType, fileName ->
+                                            URL("${information.baseUrl}$fileName").let { url ->
                                                 downloadManager.addDownload(
                                                     url,
                                                     settings.downloadFolder withChild fileName,
@@ -319,11 +331,11 @@ class MainUIController : Initializable, AutoCloseable {
                                                 )
                                             }
                                         }
-                                    }
+                                }
                             }
                         }
-                    }
-                }
+                    } ?: kotlin.run { downloadWindowsOpenTaskStarted = false }
+                } ?: kotlin.run { downloadWindowsOpenTaskStarted = false }
             }
         }
     }
@@ -341,21 +353,39 @@ class MainUIController : Initializable, AutoCloseable {
             executorService
         ).apply {
             addDownloadProgressListener(object : DownloadProgressListener<LibreOfficeDownloadFileType> {
-                override fun onProgresUpdate(percentage: Double) = (percentage * 100).let { readablePercentage ->
-                    runOnUiThread {
-                        downloadProgressBar.progress = percentage
-                        downloadProgressLabel.text = readablePercentage.format(2)
+                override fun onProgresUpdate(percentage: Double) =
+                    (percentage * 100).let {
+                        (if (it == Double.NaN) 0.0 else it).let { readablePercentage ->
+                            runOnUiThread {
+                                downloadProgressBar.progress = percentage
+                                downloadProgressLabel.text = readablePercentage.format(2) + '%'
+                            }
+                        }
                     }
-                }
 
                 override fun onCompleted(downloadFinishedEvent: DownloadFinishedEvent<LibreOfficeDownloadFileType>) {
                     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
                 }
 
-                override fun onError(e: Exception) = showAlert(e)
-
+                override fun onError(e: Exception) = when (e) {
+                    is FileAlreadyExistsException -> showWarning(
+                        localisationSupport.getReplacedString(
+                            ResourceBundleUtils.ERROR_FILEEXISRS,
+                            e.file
+                        )
+                    )
+                    else -> showError(e)
+                }
             })
         }
     }
+
     private val downloadManager: DownloadManager<LibreOfficeDownloadFileType> by downloadManagerDelegate
+
+
+    private fun updateSelection(location: DownloadLocation, information: DownloadInformation) {
+        settings = settings.copy(downloadSelection = location to information).apply { asyncPersist() }
+    }
+
+    private fun SiGuiSetting.asyncPersist() = executorService.submit { this.persist() }
 }

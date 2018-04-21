@@ -23,6 +23,12 @@ internal fun Button.closeStageOnClickAction(): () -> Unit = {
     }
 }
 
-internal fun showAlert(exception: Throwable): Unit = runOnUiThread {
-    Alert(Alert.AlertType.ERROR, exception.stackTraceAsString(), ButtonType.OK).apply { showAndWait() }
+internal fun showError(exception: Throwable): Unit = exception.stackTraceAsString().let(::showError)
+
+internal fun showError(errorMessage: String) = showAlert(errorMessage)
+
+internal fun showAlert(errorMessage: String, alertType: Alert.AlertType = Alert.AlertType.ERROR): Unit = runOnUiThread {
+    Alert(alertType, errorMessage, ButtonType.OK).apply { showAndWait() }
 }
+
+internal fun showWarning(warningMessage: String) = showAlert(warningMessage, Alert.AlertType.WARNING)
