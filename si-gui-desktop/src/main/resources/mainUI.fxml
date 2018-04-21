@@ -28,22 +28,22 @@
                         <Insets bottom="4.0" top="4.0"/>
                     </VBox.margin>
                 </ProgressIndicator>
+                <Button fx:id="startdlButton" mnemonicParsing="false" onAction="#openDownloadMenu"
+                        text="%downloader.startdl"/>
                 <padding>
                     <Insets left="7.0" right="7.0"/>
                 </padding>
             </VBox>
             <VBox prefHeight="200.0" prefWidth="235.0">
                 <HBox alignment="CENTER" prefHeight="42.0" prefWidth="263.0" spacing="3.0">
-                    <children>
-                        <ProgressBar fx:id="downloadProgressBar" prefHeight="28.0" prefWidth="104.0" progress="0.0"
-                                     HBox.hgrow="ALWAYS"/>
-                        <Label fx:id="downloadProgressLabel" text="0.0%">
-                            <HBox.margin>
-                                <Insets left="4.0" right="4.0"/>
-                            </HBox.margin>
-                        </Label>
-                        <Button fx:id="cancelDownloads" mnemonicParsing="false" text="%cancel"/>
-                    </children>
+                    <ProgressBar fx:id="downloadProgressBar" prefHeight="28.0" prefWidth="104.0" progress="0.0"
+                                 HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="downloadProgressLabel" text="0.0%">
+                        <HBox.margin>
+                            <Insets left="4.0" right="4.0"/>
+                        </HBox.margin>
+                    </Label>
+                    <Button fx:id="cancelDownloads" mnemonicParsing="false" text="%cancel"/>
                 </HBox>
             </VBox>
             <VBox prefHeight="200.0" prefWidth="202.0"/>

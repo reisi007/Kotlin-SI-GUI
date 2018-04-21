@@ -18,7 +18,7 @@ internal fun ResourceBundle.doLocalizedReplace(
     key: String,
     vararg replaceWith: Any?,
     localizedNameFunction: LocalizedNameFunction
-): Unit = getReplacedString(key, replaceWith)
+): Unit = getReplacedString(key, *replaceWith)
     .let(localizedNameFunction)
 
 internal fun Throwable.stackTraceAsString(): String = StringWriter().also {

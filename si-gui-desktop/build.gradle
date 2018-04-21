@@ -7,10 +7,8 @@ apply plugin: 'application'
 
 mainClassName = "at.reisisoft.sigui.ui.MainUI"
 
-
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {

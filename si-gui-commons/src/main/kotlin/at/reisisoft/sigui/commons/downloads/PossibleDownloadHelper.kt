@@ -304,6 +304,14 @@ object PossibleDownloadHelper {
         baseUrl: String,
         downloadType: DownloadType,
         fileTypes: Set<LibreOfficeDownloadFileType>,
+        hpLanguage: Locale
+    ): Map<LibreOfficeDownloadFileType, String> =
+        getFinalDownloadUrls(baseUrl, downloadType, fileTypes, hpLanguage.toLanguageTag())
+
+    fun getFinalDownloadUrls(
+        baseUrl: String,
+        downloadType: DownloadType,
+        fileTypes: Set<LibreOfficeDownloadFileType>,
         hpLanguage: String
     ): Map<LibreOfficeDownloadFileType, String> =
         parseHtmlDocument(baseUrl).let { rootDocument ->

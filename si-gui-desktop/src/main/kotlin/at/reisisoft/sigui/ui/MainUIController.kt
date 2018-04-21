@@ -44,6 +44,8 @@ class MainUIController : Initializable, AutoCloseable {
     private lateinit var accordionNameTitlePaneMap: BiMap<String, TitledPane>
     @FXML
     private lateinit var vBoxUpdate: VBox
+    @FXML
+    private lateinit var startdlButton: Button
 
     private lateinit var settings: SiGuiSetting
 
@@ -93,8 +95,11 @@ class MainUIController : Initializable, AutoCloseable {
                 }.let { uiString ->
                     val location = downloadLocationToNameMap.inverse()[uiString]!!
                     accordionNameComboBoxMap[uiString]!!.let { choiceBox ->
-                        choiceBox.selectionModel.selectedItem.let { selectedItem: DownloadInformation? ->
+                        choiceBox.selectionModel.selectedItem?.let { selectedItem: DownloadInformation ->
                             location to selectedItem
+                        } ?: kotlin.run {
+                            choiceBox.selectionModel.selectFirst()
+                            location to choiceBox.selectionModel.selectedItem
                         }
                     }
                 }
@@ -233,6 +238,8 @@ class MainUIController : Initializable, AutoCloseable {
                 }
             }
         }
+        //Init downloadbutton
+        startdlButton.prefWidthProperty().bind(downloadAccordion.widthProperty())
     }
 
     private val executorServiceDelegate = lazy {
@@ -270,32 +277,55 @@ class MainUIController : Initializable, AutoCloseable {
 
     }
 
-    fun openDownloadWindow(actionEvent: ActionEvent) {
-        println("Open download menu")
-        //Fetch data
-        val downloads = mapOf(LibreOfficeDownloadFileType.MAIN to "MAIN", LibreOfficeDownloadFileType.SDK to "SDK")
-        //Open
-        JavaFxUtils.loadFXML("downloadUi.fxml").apply { resources = localisationSupport }.let {
-            val parent: Parent = it.load()
-            it.getController<DownloadUiConroller>().let controller@{ controller ->
-                controller.setDownloads(downloads)
-                Stage().apply {
-                    title = localisationSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
-                    scene = Scene(parent)
-                }.showAndWait()
-                return@controller controller.downloads as Map<LibreOfficeDownloadFileType, String>
-            }.let { downloads ->
-                if (downloads.isNotEmpty())
-                    downloads.forEach { fileType, urlAsString ->
-                        urlAsString.substring(urlAsString.lastIndexOf('/') + 1).let { fileName ->
-                            URL(urlAsString).let { url ->
-                                downloadManager.addDownload(url, settings.downloadFolder withChild fileName, fileType)
+    private var downloadWindowsOpenTaskStarted = false
+    fun openDownloadMenu(actionEvent: ActionEvent) {
+        if (!downloadWindowsOpenTaskStarted) {
+            downloadWindowsOpenTaskStarted = true
+            executorService.submit {
+                println("Open download menu")
+                //Fetch data
+                settings.downloadSelection?.let { (_, nullableInformation) ->
+                    nullableInformation?.let { information ->
+                        val downloads = PossibleDownloadHelper.getFinalDownloadUrls(
+                            information.baseUrl,
+                            information.supportedDownloadType,
+                            setOf(*LibreOfficeDownloadFileType.values()),
+                            settings.hpLanguage ?: Locale.forLanguageTag(EN_US)
+                        )
+
+                        //Open
+                        JavaFxUtils.loadFXML("downloadUI.fxml").let {
+                            it.resources = localisationSupport
+                            val parent: Parent = it.load()
+                            it.getController<DownloadUiConroller>().let controller@{ controller ->
+                                controller.setDownloads(downloads, information.baseUrl)
+                                runOnUiThread {
+                                    Stage().apply {
+                                        title = localisationSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
+                                        scene = Scene(parent)
+                                    }.showAndWait()
+                                }
+                                downloadWindowsOpenTaskStarted = false
+                                return@controller controller.downloads as Map<LibreOfficeDownloadFileType, String>
+                            }.let { downloads ->
+                                if (downloads.isNotEmpty())
+                                    downloads.forEach { fileType, urlAsString ->
+                                        urlAsString.substring(urlAsString.lastIndexOf('/') + 1).let { fileName ->
+                                            URL(urlAsString).let { url ->
+                                                downloadManager.addDownload(
+                                                    url,
+                                                    settings.downloadFolder withChild fileName,
+                                                    fileType
+                                                )
+                                            }
+                                        }
+                                    }
                             }
                         }
                     }
+                }
             }
         }
-
     }
 
     @FXML
