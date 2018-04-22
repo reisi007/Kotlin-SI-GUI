@@ -5,10 +5,9 @@ import javafx.application.Platform
 import javafx.beans.binding.DoubleExpression
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
-import javafx.scene.control.Alert
-import javafx.scene.control.Button
-import javafx.scene.control.ButtonType
+import javafx.scene.control.*
 import javafx.scene.layout.Pane
+import javafx.scene.text.Font
 import javafx.stage.DirectoryChooser
 import javafx.stage.FileChooser
 import javafx.stage.Stage
@@ -63,5 +62,13 @@ internal fun Pane.preferWindowSize() {
     sceneProperty().addListener { _, _, scene ->
         prefWidthProperty().bind(scene.widthProperty())
         prefHeightProperty().bind(scene.heightProperty())
+    }
+}
+
+internal fun Label.addDefaultTooltip() {
+    tooltip = Tooltip().also {
+        it.textProperty().bind(textProperty())
+        it.font = Font(it.font.name, 12.0)
+        // Cannot change delay in Java 8
     }
 }

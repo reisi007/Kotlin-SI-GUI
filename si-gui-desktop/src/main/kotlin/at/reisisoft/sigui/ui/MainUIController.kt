@@ -1,6 +1,7 @@
 package at.reisisoft.sigui.ui
 
 import at.reisisoft.format
+import at.reisisoft.orElse
 import at.reisisoft.sigui.commons.downloads.*
 import at.reisisoft.sigui.download.DownloadFinishedEvent
 import at.reisisoft.sigui.download.DownloadManager
@@ -22,6 +23,8 @@ import javafx.stage.Stage
 import javafx.util.StringConverter
 import java.net.URL
 import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
@@ -34,7 +37,7 @@ class MainUIController : Initializable, AutoCloseable {
     private lateinit var updateListOfVersions: Button
     @FXML
     private lateinit var downloadAccordion: Accordion
-    private lateinit var localisationSupport: ResourceBundle
+    private lateinit var languageSupport: ResourceBundle
 
 
     private var downloadInformation: MutableList<Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane>> =
@@ -161,7 +164,7 @@ class MainUIController : Initializable, AutoCloseable {
 
     override fun initialize(location: URL, resources: ResourceBundle?) {
         //Add localisation
-        localisationSupport = resources ?: throw UnsupportedOperationException("Could not obtain localisation!")
+        languageSupport = resources ?: throw UnsupportedOperationException("Could not obtain localisation!")
     }
 
     private fun initDownloadList() {
@@ -170,7 +173,7 @@ class MainUIController : Initializable, AutoCloseable {
             DownloadLocation.DAILY to ResourceBundleUtils.DOWNLOADLIST_DAILY,
             DownloadLocation.ARCHIVE to ResourceBundleUtils.DOWNLOADLIST_ARCHIVE
         ).forEach { (dlLocation, key) ->
-            localisationSupport.doLocalized(key) { localizedName ->
+            languageSupport.doLocalized(key) { localizedName ->
                 downloadAccordion.panes.apply {
                     ComboBox<DownloadInformation>().let { comboBox ->
                         add(TitledPane(localizedName, comboBox).also {
@@ -185,13 +188,13 @@ class MainUIController : Initializable, AutoCloseable {
                                 override fun toString(data: DownloadInformation?): String {
                                     var betterToString: String = data?.let {
                                         when {
-                                            it.displayName == "FRESH" -> localisationSupport.getString(
+                                            it.displayName == "FRESH" -> languageSupport.getString(
                                                 ResourceBundleUtils.DOWNLOADLIST_FRESH
                                             )
-                                            it.displayName == "STABLE" -> localisationSupport.getString(
+                                            it.displayName == "STABLE" -> languageSupport.getString(
                                                 ResourceBundleUtils.DOWNLOADLIST_STABLE
                                             )
-                                            it.displayName.startsWith("TESTING") -> localisationSupport.getReplacedString(
+                                            it.displayName.startsWith("TESTING") -> languageSupport.getReplacedString(
                                                 ResourceBundleUtils.DOWNLOADLIST_TESTING,
                                                 it.displayName.let {
                                                     it.lastIndexOf(' ').let { offset ->
@@ -285,21 +288,21 @@ class MainUIController : Initializable, AutoCloseable {
     fun openOptionMenu(actionEvent: ActionEvent) {
         println("Open Options menu")
         JavaFxUtils.loadFXML("optionUI.fxml").let { loader ->
-            loader.resources = localisationSupport
+            loader.resources = languageSupport
             val parent: Parent = loader.load()
             loader.getController<OptionUIController>()!!
                 .let controller@{ optionController ->
                     optionController.internalInitialize(settings, executorService)
                     Stage().apply {
                         //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
-                        title = localisationSupport.getString(ResourceBundleUtils.OPTIONS_TITLE)
+                        title = languageSupport.getString(ResourceBundleUtils.OPTIONS_TITLE)
                         scene = Scene(parent)
                     }.showAndWait()
                     optionController.updateSettings()
                     return@controller optionController.settings
                 }.also { newSettings ->
                     settings = newSettings
-                    executorService.submit { settings.asyncPersist() }
+                    settings.asyncPersist()
                 }
         }
 
@@ -323,7 +326,7 @@ class MainUIController : Initializable, AutoCloseable {
 
                         //Open
                         JavaFxUtils.loadFXML("downloadUI.fxml").let {
-                            it.resources = localisationSupport
+                            it.resources = languageSupport
                             val parent: Parent = it.load()
                             runOnUiThread {
                                 it.getController<DownloadUiConroller>().let controller@{ controller ->
@@ -334,7 +337,7 @@ class MainUIController : Initializable, AutoCloseable {
                                     )
                                     Stage().apply {
                                         title =
-                                                localisationSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
+                                                languageSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
                                         scene = Scene(parent)
                                     }.showAndWait()
 
@@ -383,13 +386,21 @@ class MainUIController : Initializable, AutoCloseable {
                         }
                     }
 
-                override fun onCompleted(downloadFinishedEvent: DownloadFinishedEvent<LibreOfficeDownloadFileType>) {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                override fun onCompleted(downloadFinishedEvent: DownloadFinishedEvent<LibreOfficeDownloadFileType>): Unit {
+                    downloadFinishedEvent.also { (data, type) ->
+                        runOnUiThread {
+                            when (type) {
+                                LibreOfficeDownloadFileType.MAIN -> installMainText
+                                LibreOfficeDownloadFileType.HP -> installHelpText
+                                LibreOfficeDownloadFileType.SDK -> installSdkText
+                            }.text = data.toString()
+                        }
+                    }
                 }
 
                 override fun onError(e: Exception) = when (e) {
                     is FileAlreadyExistsException -> showWarning(
-                        localisationSupport.getReplacedString(
+                        languageSupport.getReplacedString(
                             ResourceBundleUtils.ERROR_FILEEXISRS,
                             e.file
                         )
@@ -434,19 +445,54 @@ class MainUIController : Initializable, AutoCloseable {
     private lateinit var installationRootPane: Region
 
     private fun initInstallation() {
+        arrayOf<Pair<Label, (Path) -> SiGuiSetting>>(
+            installMainText to { p ->
+                settings.copy(installFileMain = p)
+            }, installHelpText to { p ->
+                settings.copy(installFileHelp = p)
+            }, installSdkText to { p ->
+                settings.copy(installFileSdk = p)
+            }
+        ).forEach { (label, onTextUpdate) ->
+            //Add text update save listener
+            label.textProperty().addListener { _, _, newString ->
+                onTextUpdate(Paths.get(newString)).apply {
+                    settings = this
+                    asyncPersist()
+                }
+            }
+            //Add tooltip to label
+            label.addDefaultTooltip();
+        }
+
+        installMainText.text = settings.installFileMain?.let { it.toString() }.orElse("")
+        installHelpText.text = settings.installFileHelp?.let { it.toString() }.orElse("")
+        installSdkText.text = settings.installFileSdk?.let { it.toString() }.orElse("")
+
         startInstallButton.prefWidthProperty().bind(installationRootPane.widthProperty())
 
     }
 
+    fun openManager(actionEvent: ActionEvent) {
+        println("Open manager")
+        JavaFxUtils.loadFXML("managerUI.fxml").let { loader ->
+            loader.resources = languageSupport
+            val parent: Parent = loader.load()
+            loader.getController<ManagerUiController>()!!.let controller@{ controller ->
+                controller.internalInitialize(settings)
+                Stage().apply {
+                    title = languageSupport.getString(ResourceBundleUtils.MENU_MANAGER)
+                    scene = Scene(parent)
+                }.showAndWait()
+                return@controller controller.settings
+            }.also { newSettings ->
+                settings = newSettings
+                settings.asyncPersist()
+            }
+        }
+    }
+
 
     //Menu
-    private fun initMenu() {
-
-    }
-
-    fun openManager(event: ActionEvent): Unit {
-        TODO()
-    }
-
-
+    private fun initMenu() {}
 }

@@ -19,14 +19,15 @@ public class MainUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        primaryStage.setWidth(700);
-        primaryStage.setHeight(350);
+        primaryStage.setWidth(690);
+        primaryStage.setHeight(330);
+        primaryStage.setResizable(false);
         SiGuiSetting settings = SettingsKt.loadSettings();
         Locale.setDefault(settings.getUiLanguage());
         FXMLLoader loader = JavaFxUtils.loadFXML("mainUi.fxml");
         ResourceBundle languageSupport = ResourceBundle.getBundle("uistrings.sigui-desktop");
         loader.setResources(languageSupport);
-        primaryStage.setTitle(languageSupport.getString(ResourceBundleUtils.INSTANCE.getMAIN_TITLE()));
+        primaryStage.setTitle(languageSupport.getString(ResourceBundleUtils.INSTANCE.getAPPNAME()));
         Parent mainUi = loader.load();
         controller = loader.getController();
         controller.internalInitialize(settings);

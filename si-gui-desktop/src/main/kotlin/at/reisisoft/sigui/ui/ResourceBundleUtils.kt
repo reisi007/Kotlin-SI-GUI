@@ -6,6 +6,7 @@ import java.nio.file.Paths
 import java.util.*
 
 internal object ResourceBundleUtils {
+    val APPNAME = "appname"
     private val DOWNLOADLIST = "downloadlist.named"
     val DOWNLOADLIST_NAMED = "$DOWNLOADLIST.special"
     val DOWNLOADLIST_FRESH = "$DOWNLOADLIST.fresh"
@@ -27,6 +28,8 @@ internal object ResourceBundleUtils {
     val CANCEL = "cancel"
     private val ERROR = "error"
     val ERROR_FILEEXISRS = "$ERROR.fileexists"
+    private val MENU = "menu"
+    val MENU_MANAGER = "$MENU.manager"
 
     internal fun getSupportedLanguages(): Set<Locale> =
         newLocaleTreeSet().apply { add(Locale.forLanguageTag(EN_US)) }.apply {
