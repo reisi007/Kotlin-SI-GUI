@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
 <AnchorPane prefHeight="300.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.MainUIController">
     <BorderPane fx:id="rootPane" prefHeight="300.0" prefWidth="700.0">
         <top>
-            <MenuBar fx:id="menuBar" focusTraversable="true" BorderPane.alignment="CENTER">
-                <Menu text="SI-GUI">
-                    <MenuItem fx:id="m_options" onAction="#openOptionMenu" text="%options.title"/>
+            <MenuBar focusTraversable="true" BorderPane.alignment="CENTER">
+                <Menu text="%main.title">
+                    <MenuItem onAction="#openOptionMenu" text="%options.title"/>
                 </Menu>
-                <Menu text="Help">
-                    <MenuItem fx:id="m_manual" text="Online Manual"/>
+                <Menu onAction="#openManager" text="%menu.manager"/>
+                <Menu text="%menu.help">
+                    <MenuItem text="%menu.about"/>
+                    <MenuItem text="%menu.license"/>
                     <SeparatorMenuItem/>
-                    <MenuItem fx:id="m_about" text="About"/>
+                    <MenuItem text="%menu.manual"/>
                 </Menu>
             </MenuBar>
         </top>
         <center>
-            <HBox fillHeight="false" prefHeight="200.0" prefWidth="595.0" spacing="7.0" BorderPane.alignment="CENTER">
-                <VBox fx:id="vBoxUpdate" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="182.0" spacing="7.0">
-                    <Accordion fx:id="downloadAccordion" maxHeight="75.0" maxWidth="250.0" prefWidth="250.0"/>
+            <TilePane fx:id="centerLayout" alignment="CENTER" hgap="7.0" prefColumns="3" prefRows="3"
+                      prefTileHeight="200.0" prefTileWidth="200.0" vgap="7.0" BorderPane.alignment="CENTER">
+                <VBox fx:id="vBoxUpdate" alignment="TOP_CENTER" spacing="7.0">
+                    <Accordion fx:id="downloadAccordion" prefWidth="250.0"/>
                     <Button fx:id="updateListOfVersions" mnemonicParsing="false"
                             onAction="#updateListOfDownloadVersions" text="%downloadlist.update"/>
                     <ProgressIndicator fx:id="indicatorUpdateVersions" minHeight="80.0" visible="false">
@@ -35,26 +39,69 @@
                         <Insets left="7.0" right="7.0"/>
                     </padding>
                 </VBox>
-                <VBox prefHeight="200.0" prefWidth="235.0">
-                    <HBox alignment="CENTER" prefHeight="42.0" prefWidth="263.0" spacing="3.0">
-                        <ProgressBar fx:id="downloadProgressBar" prefHeight="28.0" prefWidth="104.0" progress="0.0"
+                <VBox alignment="CENTER" spacing="7.0">
+                    <HBox alignment="CENTER" spacing="3.0">
+                        <ProgressBar fx:id="downloadProgressBar" prefHeight="18.0" prefWidth="141.0" progress="0.0"
                                      HBox.hgrow="ALWAYS"/>
                         <Label fx:id="downloadProgressLabel" text="0.0%">
                             <HBox.margin>
                                 <Insets left="4.0" right="4.0"/>
                             </HBox.margin>
                         </Label>
-                        <Button fx:id="cancelDownloads" mnemonicParsing="false" text="%cancel"/>
                     </HBox>
+                    <Button fx:id="cancelDownloads" mnemonicParsing="false" text="%cancel.dl"/>
                 </VBox>
-                <VBox prefHeight="200.0" prefWidth="202.0"/>
-                <opaqueInsets>
-                    <Insets/>
-                </opaqueInsets>
-                <BorderPane.margin>
-                    <Insets top="7.0"/>
-                </BorderPane.margin>
-            </HBox>
+                <BorderPane fx:id="installationRootPane" prefHeight="200.0" prefWidth="200.0">
+                    <center>
+                        <VBox alignment="CENTER" prefWidth="200.0" spacing="7" BorderPane.alignment="CENTER">
+                            <VBox spacing="7">
+                                <Label text="%install.main"/>
+                                <Label fx:id="installMainText" alignment="CENTER" text="Set by code" wrapText="true">
+                                    <font>
+                                        <Font name="Monospaced Regular" size="12.0"/>
+                                    </font>
+                                </Label>
+                                <HBox spacing="3">
+                                    <Button fx:id="resetMain" text="%reset" HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="runMain" text="%run" HBox.hgrow="NEVER"/>
+                                </HBox>
+                            </VBox>
+                            <VBox spacing="7">
+                                <Label text="%install.hp"/>
+                                <Label fx:id="installHelpText" alignment="CENTER" text="Set by code" wrapText="true">
+                                    <font>
+                                        <Font name="Monospaced Regular" size="12.0"/>
+                                    </font>
+                                </Label>
+                                <HBox spacing="3">
+                                    <Button fx:id="resetHelp" text="%reset" HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="runHelp" text="%run" HBox.hgrow="NEVER"/>
+                                </HBox>
+                            </VBox>
+                            <VBox spacing="7">
+                                <Label text="%install.sdk"/>
+                                <Label fx:id="installSdkText" alignment="CENTER" text="Set by code" wrapText="true">
+                                    <font>
+                                        <Font name="Monospaced Regular" size="12.0"/>
+                                    </font>
+                                </Label>
+                                <HBox spacing="3">
+                                    <Button fx:id="resetSdk" text="%reset" HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="runSdk" text="%run" HBox.hgrow="NEVER"/>
+                                </HBox>
+                            </VBox>
+                        </VBox>
+                    </center>
+                    <bottom>
+                        <Button fx:id="startInstallButton" mnemonicParsing="false" text="%downloader.startdl"
+                                BorderPane.alignment="CENTER">
+                            <BorderPane.margin>
+                                <Insets bottom="3.0" top="7.0"/>
+                            </BorderPane.margin>
+                        </Button>
+                    </bottom>
+                </BorderPane>
+            </TilePane>
         </center>
     </BorderPane>
 </AnchorPane>

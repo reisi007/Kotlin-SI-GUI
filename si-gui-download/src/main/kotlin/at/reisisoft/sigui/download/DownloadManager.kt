@@ -27,11 +27,13 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
     DownloadManager<T> {
 
     private val activeDownloads: MutableList<Future<out Any>> = LinkedList()
+    private var downloadCancelInProgress = false
 
     constructor() : this(Executors.newCachedThreadPool(), true)
 
 
     override fun addDownload(from: URL, to: Path, customData: T) {
+        downloadCancelInProgress = false
         activeDownloads += executorService.submit {
             var currentFileProgress = 0L
             var continueDownload = true
@@ -65,8 +67,10 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
                         }
                     } catch (e: IOException) {
                         progressUpdate(-currentFileProgress, -downloadSize)
-                        processException(e)
-                        throw e;
+                        if (!downloadCancelInProgress) {
+                            processException(e)
+                            throw e;
+                        }
                     }
                 }
             }
@@ -96,6 +100,7 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
     }
 
     override fun cancelAllDownloads() {
+        downloadCancelInProgress = true
         activeDownloads.stream().filter { !it.isDone }.forEach { it.cancel(true) }
         activeDownloads.clear()
     }

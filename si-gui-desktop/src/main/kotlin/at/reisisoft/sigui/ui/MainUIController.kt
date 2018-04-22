@@ -8,8 +8,6 @@ import at.reisisoft.sigui.download.DownloadProgressListener
 import at.reisisoft.sigui.settings.SiGuiSetting
 import at.reisisoft.ui.*
 import at.reisisoft.withChild
-import com.google.common.collect.BiMap
-import com.google.common.collect.HashBiMap
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXML
@@ -18,6 +16,7 @@ import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.control.*
 import javafx.scene.layout.Pane
+import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import javafx.util.StringConverter
@@ -25,7 +24,7 @@ import java.net.URL
 import java.nio.file.FileAlreadyExistsException
 import java.util.*
 import java.util.concurrent.Executors
-import kotlin.collections.HashMap
+import kotlin.collections.ArrayList
 
 class MainUIController : Initializable, AutoCloseable {
 
@@ -36,20 +35,31 @@ class MainUIController : Initializable, AutoCloseable {
     @FXML
     private lateinit var downloadAccordion: Accordion
     private lateinit var localisationSupport: ResourceBundle
-    @FXML
-    private lateinit var menuBar: MenuBar
-    @FXML
-    private lateinit var downloadLocationToNameMap: BiMap<DownloadLocation, String>
-    @FXML
-    private lateinit var accordionNameComboBoxMap: BiMap<String, ComboBox<DownloadInformation>>
-    @FXML
-    private lateinit var accordionNameTitlePaneMap: BiMap<String, TitledPane>
+
+
+    private var downloadInformation: MutableList<Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane>> =
+        ArrayList(3)
+
+    private fun List<Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane>>.find(find: DownloadLocation): Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane> =
+        (if (find == DownloadLocation.TESTING) DownloadLocation.STABLE else find).let { dl ->
+            this.find { it.first == dl }!!
+        }
+
+    private fun List<Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane>>.find(find: ComboBox<DownloadInformation>): Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane> =
+        this.find { it.second == find }!!
+
+    private fun List<Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane>>.find(find: TitledPane): Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane> =
+        this.find { it.third == find }!!
+
     @FXML
     private lateinit var vBoxUpdate: VBox
+
     @FXML
     private lateinit var startdlButton: Button
     @FXML
     private lateinit var rootPane: Pane
+    @FXML
+    private lateinit var centerLayout: Pane
 
     private lateinit var settings: SiGuiSetting
 
@@ -93,26 +103,21 @@ class MainUIController : Initializable, AutoCloseable {
         val realCurrentSelection = currentSelection
                 ?: downloadAccordion.expandedPane.let { expandedPane: TitledPane? ->
                     if (expandedPane == null)
-                        downloadLocationToNameMap[DownloadLocation.DAILY]!!
+                        downloadInformation.find(DownloadLocation.STABLE)
                     else
-                        accordionNameTitlePaneMap.inverse()[expandedPane]!!
-                }.let { uiString ->
-                    val location = downloadLocationToNameMap.inverse()[uiString]!!
-                    accordionNameComboBoxMap[uiString]!!.let { choiceBox ->
-                        choiceBox.selectionModel.selectedItem?.let { selectedItem: DownloadInformation ->
-                            location to selectedItem
-                        } ?: kotlin.run {
-                            location to choiceBox.items.firstOrNull()
-                        }
+                        downloadInformation.find(expandedPane)
+                }.let { (location, comboBox, _) ->
+                    comboBox.selectionModel.selectedItem?.let { selectedItem: DownloadInformation ->
+                        location to selectedItem
+                    } ?: kotlin.run {
+                        location to comboBox.items.firstOrNull()
                     }
+
                 }
 
-        val selectedUiString = downloadLocationToNameMap[realCurrentSelection.first]!!
         //Update data
-
         for (location in data.keys) {
-            val uiText = downloadLocationToNameMap.getValue(location)
-            accordionNameComboBoxMap[uiText]!!.let {
+            downloadInformation.find(location).let { (_, it, _) ->
                 runOnUiThread {
                     it.items.let { items ->
                         items.clear()
@@ -121,16 +126,17 @@ class MainUIController : Initializable, AutoCloseable {
                 }
             }
         }
-        //Update selection
-        downloadAccordion.expandedPane = accordionNameTitlePaneMap[selectedUiString]
 
-        accordionNameComboBoxMap[selectedUiString]!!.let { selectedComboBox ->
-            selectedComboBox.selectionModel.let { selectionModel ->
+        //Update selection
+        downloadInformation.find(realCurrentSelection.first).let { (_, expandedComboBox, expandedPane) ->
+            downloadAccordion.expandedPane = expandedPane
+
+            expandedComboBox.selectionModel.let { selectionModel ->
                 realCurrentSelection.second.let { selectedDlInfo ->
                     runOnUiThread {
                         val nextSelectedItem = selectedDlInfo?.let { old ->
-                            selectedComboBox.items.find { it.displayName == old.displayName }
-                        } ?: selectedComboBox.items.firstOrNull() //null if list is empty
+                            expandedComboBox.items.find { it.displayName == old.displayName }
+                        } ?: expandedComboBox.items.firstOrNull() //null if list is empty
 
                         selectionModel.select(nextSelectedItem)
 
@@ -138,43 +144,41 @@ class MainUIController : Initializable, AutoCloseable {
                             realCurrentSelection.first to nextSelectedItem
 
                         //Persist settings
-                        settings = settings.copy(downloadedVersions = data, downloadSelection = selectionToStore).also {
-                            if (storeSettings) {
-                                it.asyncPersist()
-                                settings = it
+                        settings = settings.copy(downloadedVersions = data, downloadSelection = selectionToStore)
+                            .also {
+                                if (storeSettings) {
+                                    it.asyncPersist()
+                                    settings = it
+                                }
+
                             }
-                        }
                     }
                 }
             }
         }
     }
 
+
     override fun initialize(location: URL, resources: ResourceBundle?) {
         //Add localisation
         localisationSupport = resources ?: throw UnsupportedOperationException("Could not obtain localisation!")
     }
 
-    /**
-     * This is called when [setSettings] is called for the first time
-     */
-    private fun internalInitialize() {
-        rootPane.preferWindowSize()
-        //Setup accordion
-        val tmpChoiceBoxMap: BiMap<String, ComboBox<DownloadInformation>> = HashBiMap.create()
-        val tmpTitlePaneMap: BiMap<String, TitledPane> = HashBiMap.create()
+    private fun initDownloadList() {
+        arrayOf(
+            DownloadLocation.STABLE to ResourceBundleUtils.DOWNLOADLIST_NAMED,
+            DownloadLocation.DAILY to ResourceBundleUtils.DOWNLOADLIST_DAILY,
+            DownloadLocation.ARCHIVE to ResourceBundleUtils.DOWNLOADLIST_ARCHIVE
+        ).forEach { (dlLocation, key) ->
+            localisationSupport.doLocalized(key) { localizedName ->
+                downloadAccordion.panes.apply {
+                    ComboBox<DownloadInformation>().let { comboBox ->
+                        add(TitledPane(localizedName, comboBox).also {
+                            //Add element to list
+                            downloadInformation.add(Triple(dlLocation, comboBox, it))
 
-        downloadLocationToNameMap = HashBiMap.create<DownloadLocation, String>().also {
-            arrayOf(
-                DownloadLocation.STABLE to ResourceBundleUtils.DOWNLOADLIST_NAMED,
-                DownloadLocation.DAILY to ResourceBundleUtils.DOWNLOADLIST_DAILY,
-                DownloadLocation.ARCHIVE to ResourceBundleUtils.DOWNLOADLIST_ARCHIVE
-            ).forEach { (dlLocation, key) ->
-                localisationSupport.doLocalized(key) { localizedName ->
-                    it.put(dlLocation, localizedName)
-                    downloadAccordion.panes.apply {
-                        add(TitledPane(localizedName, ComboBox<DownloadInformation>().also {
-                            tmpChoiceBoxMap.put(localizedName, it)
+                        })
+                        comboBox.also {
                             val converter = object : StringConverter<DownloadInformation>() {
                                 private val relationMap: MutableMap<String, DownloadInformation?> = HashMap()
 
@@ -224,30 +228,23 @@ class MainUIController : Initializable, AutoCloseable {
                             it.converter = converter
 
                             it.selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                                accordionNameComboBoxMap.inverse().getValue(it).let { uiString ->
-                                    downloadLocationToNameMap.inverse().getValue(uiString)
-                                }?.let {
-                                    updateSelection(it, newValue)
+                                downloadInformation.find(it).let { (location, _, _) ->
+                                    updateSelection(location, newValue)
                                 }
                             }
+                        }
 
-                        }).also {
-                            tmpTitlePaneMap.put(localizedName, it)
-                        })
                     }
                 }
             }
         }
-
-        accordionNameComboBoxMap = tmpChoiceBoxMap
-        accordionNameTitlePaneMap = tmpTitlePaneMap
-
         updateAccordion(settings.downloadedVersions, settings.downloadSelection)
 
         //Setup update button
         updateListOfVersions.prefWidthProperty().bind(vBoxUpdate.widthProperty())
+    }
 
-        //Init download
+    private fun initDownloads() {
         cancelDownloads.onAction = EventHandler<ActionEvent> {
             downloadManagerDelegate.let {
                 if (it.isInitialized()) {
@@ -255,8 +252,22 @@ class MainUIController : Initializable, AutoCloseable {
                 }
             }
         }
+        cancelDownloads.prefWidthProperty().bind(installationRootPane.widthProperty())
         //Init downloadbutton
         startdlButton.prefWidthProperty().bind(downloadAccordion.widthProperty())
+    }
+
+    /**
+     * This is called when [setSettings] is called for the first time
+     */
+    private fun internalInitialize() {
+        rootPane.preferWindowSize()
+        centerLayout.prefWidthProperty().bind(rootPane.widthProperty())
+
+        initMenu()
+        initDownloadList()
+        initDownloads()
+        initInstallation()
     }
 
     private val executorServiceDelegate = lazy {
@@ -316,9 +327,14 @@ class MainUIController : Initializable, AutoCloseable {
                             val parent: Parent = it.load()
                             runOnUiThread {
                                 it.getController<DownloadUiConroller>().let controller@{ controller ->
-                                    controller.setDownloads(downloads, information.baseUrl, settings.downloadFolder)
+                                    controller.setDownloads(
+                                        downloads,
+                                        information.baseUrl,
+                                        settings.downloadFolder
+                                    )
                                     Stage().apply {
-                                        title = localisationSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
+                                        title =
+                                                localisationSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
                                         scene = Scene(parent)
                                     }.showAndWait()
 
@@ -392,4 +408,45 @@ class MainUIController : Initializable, AutoCloseable {
     }
 
     private fun SiGuiSetting.asyncPersist() = executorService.submit { this.persist() }
+
+    // Installation layout
+    @FXML
+    private lateinit var startInstallButton: Button
+    @FXML
+    private lateinit var installMainText: Label
+    @FXML
+    private lateinit var resetMain: Button
+    @FXML
+    private lateinit var resetSdk: Button
+    @FXML
+    private lateinit var resetHelp: Button
+    @FXML
+    private lateinit var runMain: Button
+    @FXML
+    private lateinit var runSdk: Button
+    @FXML
+    private lateinit var runHelp: Button
+    @FXML
+    private lateinit var installSdkText: Label
+    @FXML
+    private lateinit var installHelpText: Label
+    @FXML
+    private lateinit var installationRootPane: Region
+
+    private fun initInstallation() {
+        startInstallButton.prefWidthProperty().bind(installationRootPane.widthProperty())
+
+    }
+
+
+    //Menu
+    private fun initMenu() {
+
+    }
+
+    fun openManager(event: ActionEvent): Unit {
+        TODO()
+    }
+
+
 }

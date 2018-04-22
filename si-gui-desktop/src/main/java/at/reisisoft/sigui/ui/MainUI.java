@@ -19,6 +19,8 @@ public class MainUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        primaryStage.setWidth(700);
+        primaryStage.setHeight(350);
         SiGuiSetting settings = SettingsKt.loadSettings();
         Locale.setDefault(settings.getUiLanguage());
         FXMLLoader loader = JavaFxUtils.loadFXML("mainUi.fxml");

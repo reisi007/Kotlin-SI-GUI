@@ -18,9 +18,6 @@ dependencies {
     compile project(':si-gui-commons')
     compile project(':si-gui-download')
 
-    // https://mvnrepository.com/artifact/com.google.guava/guava
-    compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
-
     // https://mvnrepository.com/artifact/org.controlsfx/controlsfx
     compile group: 'org.controlsfx', name: 'controlsfx', version: '8.+'
 
