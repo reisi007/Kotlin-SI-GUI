@@ -13,6 +13,7 @@ import at.reisisoft.sigui.hostspecific.SHORTCUT_CREATOR
 import at.reisisoft.sigui.settings.SiGuiSetting
 import at.reisisoft.sigui.settings.asMutableMap
 import at.reisisoft.ui.*
+import at.reisisoft.ui.JavaFxUtils.showAlert
 import at.reisisoft.ui.JavaFxUtils.showError
 import at.reisisoft.withChild
 import javafx.event.ActionEvent
@@ -548,7 +549,7 @@ class MainUIController : Initializable, AutoCloseable {
             loader.resources = languageSupport
             val parent: Parent = loader.load()
             loader.getController<ManagerUiController>()!!.let controller@{ controller ->
-                controller.internalInitialize(settings)
+                controller.internalInitialize(settings, executorService)
                 Stage().apply {
                     title = languageSupport.getString(ResourceBundleUtils.MENU_MANAGER)
                     scene = Scene(parent)
@@ -587,6 +588,10 @@ class MainUIController : Initializable, AutoCloseable {
                         settings.managedInstalledVersions.asMutableMap().apply {
                             putIfAbsent(installName, it)
                         })
+                        showAlert(
+                            languageSupport.getString(ResourceBundleUtils.INSTALL_SUCCESS),
+                            Alert.AlertType.INFORMATION
+                        )
                     }
             }
         }

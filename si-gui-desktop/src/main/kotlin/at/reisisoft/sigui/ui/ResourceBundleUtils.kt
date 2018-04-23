@@ -31,6 +31,11 @@ internal object ResourceBundleUtils {
     private val MENU = "menu"
     val MENU_MANAGER = "$MENU.manager"
     val CHOOSE_LIBREOFFICE = "install.choose"
+    val INSTALL_SUCCESS = "install.success"
+    private val MANAGER = "manager"
+    val MANAGER_DELETE = "$MANAGER.delete"
+    val MANAGER_DELETE_SUCCESS = "$MANAGER.deletesuccess"
+    val MANAGER_DELETE_FAILURE = "$MANAGER.deletefailure"
 
     internal fun getSupportedLanguages(): Set<Locale> =
         newLocaleTreeSet().apply { add(Locale.forLanguageTag(EN_US)) }.apply {

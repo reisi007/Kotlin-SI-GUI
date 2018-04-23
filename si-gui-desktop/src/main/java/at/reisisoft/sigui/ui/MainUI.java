@@ -21,7 +21,7 @@ public class MainUI extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Thread.currentThread().setUncaughtExceptionHandler(JavaFXKt.getUNCAUGHT_EXCEPTION_HANDLER());
-        primaryStage.setWidth(690);
+        primaryStage.setWidth(650);
         primaryStage.setHeight(330);
         primaryStage.setResizable(false);
         SiGuiSetting settings = SettingsKt.loadSettings();

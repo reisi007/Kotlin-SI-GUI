@@ -9,12 +9,10 @@ import java.nio.file.Path
 internal val SHORTCUT_CREATOR by lazy<ShortcutCreator> {
     when (OSUtils.CURRENT_OS) {
         OSUtils.OS.WINDOWS -> { targetFile: Path, shortcutRootFolder: Path, name: String ->
-            JShellLink().apply {
-                folder = shortcutRootFolder.toString()
-                this.name = name
+            JShellLink(shortcutRootFolder.toString(), name).apply {
                 path = targetFile.toString()
             }.save()
-            shortcutRootFolder withChild "$name.lnl"
+            shortcutRootFolder withChild "$name.lnk"
         }
         else -> throw IllegalStateException("Creating shortcuts is not supported for ${OSUtils.CURRENT_OS}")
     }

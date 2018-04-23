@@ -21,13 +21,20 @@ object BootstrapIniEditor {
     }
 
     private fun modifyBootstrapIni(bootstrapFilePath: Path) {
-        Files.newBufferedReader(bootstrapFilePath, StandardCharsets.UTF_8).readText()
-            .replace(modifyRegex, correctUserInstallationFolder)
-            .apply {
-                Files.newBufferedWriter(bootstrapFilePath, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING)
-                    .use { writer ->
-                        writer.write(this)
+        Files.newBufferedReader(bootstrapFilePath, StandardCharsets.UTF_8).readText().let { wholeFile ->
+            modifyRegex.find(wholeFile)?.value?.let {
+                wholeFile.replace(it, correctUserInstallationFolder)
+                    .apply {
+                        Files.newBufferedWriter(
+                            bootstrapFilePath,
+                            StandardCharsets.UTF_8,
+                            StandardOpenOption.TRUNCATE_EXISTING
+                        )
+                            .use { writer ->
+                                writer.write(this)
+                            }
                     }
             }
+        }
     }
 }

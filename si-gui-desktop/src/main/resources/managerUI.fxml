@@ -1,20 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ButtonBar?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.layout.*?>
 <?import org.controlsfx.control.CheckListView?>
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.ManagerUiController">
     <BorderPane fx:id="rootLayout" prefHeight="400.0" prefWidth="600.0">
         <bottom>
-            <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-                <buttons>
-                    <Button mnemonicParsing="false" text="Button"/>
-                    <Button mnemonicParsing="false" text="Button"/>
-                </buttons>
-            </ButtonBar>
+            <HBox prefHeight="40.0" prefWidth="200.0">
+                <ProgressIndicator fx:id="deleteProgress" visible="false">
+                    <HBox.margin>
+                        <Insets top="2.0"/>
+                    </HBox.margin>
+                    <padding>
+                        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+                    </padding>
+                </ProgressIndicator>
+                <ButtonBar prefHeight="40.0" prefWidth="150.0" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
+                    <buttons>
+                        <Button fx:id="closeButton" cancelButton="true" mnemonicParsing="false" text="%abort"/>
+                        <Button fx:id="deleteButton" defaultButton="true" mnemonicParsing="false"
+                                text="%manager.delete"/>
+
+                    </buttons>
+                </ButtonBar>
+                <padding>
+                    <Insets left="7.0" right="7.0"/>
+                </padding>
+            </HBox>
         </bottom>
         <center>
             <CheckListView fx:id="checkListView" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER"/>

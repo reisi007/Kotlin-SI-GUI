@@ -1,16 +1,31 @@
 package at.reisisoft.sigui.ui
 
 import at.reisisoft.sigui.settings.SiGuiSetting
+import at.reisisoft.stream
+import at.reisisoft.ui.JavaFxUtils.showAlert
+import at.reisisoft.ui.JavaFxUtils.showError
+import at.reisisoft.ui.closeStageOnClick
 import at.reisisoft.ui.preferWindowSize
+import at.reisisoft.ui.runOnUiThread
+import at.reisisoft.ui.showWarning
+import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
+import javafx.scene.control.Alert
+import javafx.scene.control.Button
+import javafx.scene.control.ProgressIndicator
 import javafx.scene.control.cell.CheckBoxListCell
 import javafx.scene.layout.Pane
 import javafx.util.Callback
 import org.controlsfx.control.CheckListView
 import java.net.URL
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.ExecutorService
+import java.util.stream.Collectors
+import java.util.stream.Stream
+import kotlin.collections.ArrayList
 
 class ManagerUiController : Initializable {
 
@@ -22,13 +37,19 @@ class ManagerUiController : Initializable {
     private lateinit var rootLayout: Pane
     @FXML
     private lateinit var checkListView: CheckListView<Map.Entry<String, Array<Path>>>
+    @FXML
+    private lateinit var deleteProgress: ProgressIndicator
+    @FXML
+    private lateinit var closeButton: Button
+    @FXML
+    private lateinit var deleteButton: Button
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         languageSupport = resources!!
     }
 
 
-    internal fun internalInitialize(settings: SiGuiSetting) {
+    internal fun internalInitialize(settings: SiGuiSetting, executorService: ExecutorService) {
         this.settings = settings
         //setup
         rootLayout.preferWindowSize()
@@ -39,11 +60,58 @@ class ManagerUiController : Initializable {
                     object : CheckBoxListCell<Map.Entry<String, Array<Path>>>(checkListView::getItemBooleanProperty) {
                         override fun updateItem(item: Map.Entry<String, Array<Path>>?, empty: Boolean) {
                             super.updateItem(item, empty)
-                            text = item?.key ?: "null"
+                            text = item?.key ?: ""
                         }
                     }
                 }
 
         checkListView.items.addAll(settings.managedInstalledVersions.entries)
+
+        closeButton.closeStageOnClick()
+
+        deleteButton.onAction = EventHandler {
+            if (deleteProgress.isVisible)
+                return@EventHandler
+            runOnUiThread { deleteProgress.isVisible = true }
+            checkListView.checkModel.checkedItems.let { ArrayList(it) }.let { items ->
+                executorService.submit {
+                    //Safe delete all files
+                    try {
+                        items.stream().flatMap { it.value.stream() }.filter { Files.exists(it) }
+                            .flatMap {
+                                if (Files.isDirectory(it))
+                                    Files.list(it)
+                                Stream.of(it)
+                            }.filter { Files.exists(it) }.sorted(Comparator.reverseOrder())
+                            .map {
+                                try {
+                                    Files.delete(it)
+                                    null
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    it
+                                }
+                            }.filter(Objects::nonNull).map { it!!.toString() }
+                            .collect(Collectors.joining(System.lineSeparator())).let {
+                                if (it.isBlank())
+                                    showAlert(
+                                        languageSupport.getString(ResourceBundleUtils.INSTALL_SUCCESS),
+                                        Alert.AlertType.INFORMATION
+                                    )
+                                else showWarning(languageSupport.getString(ResourceBundleUtils.MANAGER_DELETE_FAILURE) + System.lineSeparator() + System.lineSeparator() + it)
+                            }
+
+                    } catch (e: Exception) {
+                        showError(e)
+                    }
+
+
+                    runOnUiThread {
+                        checkListView.items.removeAll(items)
+                        deleteProgress.isVisible = false
+                    }
+                }
+            }
+        }
     }
 }

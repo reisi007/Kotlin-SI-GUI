@@ -3,8 +3,10 @@ package at.reisisoft.sigui.commons.installation
 import at.reisisoft.NamingUtils
 import at.reisisoft.sigui.commons.downloads.DownloadType
 import at.reisisoft.withChild
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.stream.Stream
 
 object ParallelInstallation {
 
@@ -29,43 +31,62 @@ object ParallelInstallation {
         shortcutCreator: ShortcutCreator?,
         shortcutLocation: Path?
     ): Array<Path> {
+        Stream.of(installLocation).filter { Files.exists(it) }.flatMap(Files::list).skip(1).findAny().ifPresent {
+            //If install location exists, and is a non-empty directory
+            throw IllegalStateException("This folder is not suitable for parallel installation!")
+        }
         try {
             filepaths.forEach {
                 it.let { Paths.get(it).let { it.fileName.toString() to it.parent } }
                     .also { (fileName, containingFolder) ->
                         when (parallelinstalationType) {
-                            ParallelInstallationOS.WINDOWS -> "msiexec.exe /qr /norestart /a \"$fileName\" TARGETDIR=\"$installLocation\""
+                            ParallelInstallationOS.WINDOWS ->
+                                arrayOf(
+                                    "msiexec",
+                                    "/qr",
+                                    "/norestart",
+                                    "/a",
+                                    "\"$fileName\"",
+                                    "TARGETDIR=\"$installLocation\""
+                                )
+
                             else -> throw IllegalStateException("Parallel installation for $parallelinstalationType is not supported!")
                         }.let { commandlineArgs ->
                             ProcessBuilder()
                                 .directory(containingFolder.toFile())
-                                .command(commandlineArgs)
-                                .start()
-                                .waitFor()
+                                .command(*commandlineArgs)
+                                .start().let {
+                                    it.waitFor()
+                                    it.exitValue()
+                                }
+
                         }
                     }
             }
+            (installLocation withChild "program").let { binPath ->
+                BootstrapIniEditor.modifyInFolder(binPath)
 
-            return when (parallelinstalationType) {
-                ParallelInstallationOS.WINDOWS -> "soffice.exe"
-                else -> throw IllegalStateException("Parallel installation for $parallelinstalationType is not supported!")
-            }.let { sofficeFileName ->
+                return when (parallelinstalationType) {
+                    ParallelInstallationOS.WINDOWS -> "soffice.exe"
+                    else -> throw IllegalStateException("Parallel installation for $parallelinstalationType is not supported!")
+                }.let { sofficeFileName ->
 
-                val addedFiles = mutableListOf(installLocation)
+                    val addedFiles = mutableListOf(installLocation)
 
-                shortcutCreator?.let {
-                    (shortcutLocation
-                            ?: throw IllegalStateException("Shortcut location mus not be null if shortcut creator is non-null")).let { rootPath ->
-                        addedFiles.add(
-                            it(
-                                installLocation withChild "program" withChild sofficeFileName,
-                                rootPath,
-                                NamingUtils.extractName(filepaths.first())
+                    shortcutCreator?.let {
+                        (shortcutLocation
+                                ?: throw IllegalStateException("Shortcut location mus not be null if shortcut creator is non-null")).let { rootPath ->
+                            addedFiles.add(
+                                it(
+                                    binPath withChild sofficeFileName,
+                                    rootPath,
+                                    NamingUtils.extractName(Paths.get(filepaths.first()).fileName.toString())
+                                )
                             )
-                        )
+                        }
                     }
+                    addedFiles.toTypedArray()
                 }
-                addedFiles.toTypedArray()
             }
         } catch (e: Exception) {
             e.printStackTrace()
