@@ -5,3 +5,5 @@ build/
 !/.idea/runConfigurations/
 !/.idea/runConfigurations/*.xml
 *.iml
+#SI-GUI updater
+last_update.txt
