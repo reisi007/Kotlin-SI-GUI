@@ -11,6 +11,7 @@ import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.Button
+import javafx.scene.control.CheckBox
 import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.layout.FlowPane
@@ -62,7 +63,14 @@ class OptionUIController : Initializable {
     private lateinit var downloadFolderLabel: Label
     @FXML
     private lateinit var rootLayout: Pane
-
+    @FXML
+    private lateinit var shortcutCreationEnabled: CheckBox
+    @FXML
+    private lateinit var shortcutCreationText: Label
+    @FXML
+    private lateinit var shortcutCreationButton: Button
+    @FXML
+    private lateinit var shortcutCreationLabel: Label
 
     internal fun internalInitialize(newSettings: SiGuiSetting, executorService: ExecutorService) {
         if (!::settings.isInitialized) {
@@ -78,6 +86,10 @@ class OptionUIController : Initializable {
 
     private fun internalInitialize(executorService: ExecutorService) {
         rootLayout.preferWindowSize()
+
+        arrayOf(installFolderText, shortcutCreationText, downloadFolderText).forEach {
+            it.addDefaultTooltip()
+        }
 
         closeButton.closeStageOnClick()
         //Setup download tyes
@@ -171,9 +183,20 @@ class OptionUIController : Initializable {
         installFolderLabel.text = languageSupport.getString(ResourceBundleUtils.OPTIONS_ROOTINSTALLFOLDER)
 
         //Elements, whose width should be restricted to 40% of available width
-        arrayOf(installFolderLabel, installFolderText, downloadFolderLabel, downloadFolderText).forEach {
+        arrayOf(
+            installFolderLabel,
+            installFolderText,
+            downloadFolderLabel,
+            downloadFolderText,
+            shortcutCreationLabel,
+            shortcutCreationText
+        ).forEach {
             it.prefWidthProperty().bind(rootLayout.widthProperty() * 0.35)
         }
+
+        //Sortcut creation
+        shortcutCreationEnabled.isSelected = settings.createDesktopShortCut
+        shortcutCreationText.text = settings.shortcutDir.toString()
 
     }
 
@@ -194,13 +217,19 @@ class OptionUIController : Initializable {
                     helppackLanguages.selectionModel.selectedItem.let { selectedHpLanguage ->
                         Paths.get(downloadFolderText.text).let { newDownloadFolder ->
                             Paths.get(installFolderText.text).let { newInstallationFolder ->
-                                it.copy(
-                                    downloadTypes = selectedDownloadTypes,
-                                    hpLanguage = selectedHpLanguage,
-                                    uiLanguage = selectedUiLanguage,
-                                    intDownloadFolder = newDownloadFolder,
-                                    intRootInstallationFolder = newInstallationFolder
-                                )
+                                Paths.get(shortcutCreationText.text).let { newShortcutFolder ->
+                                    shortcutCreationEnabled.isSelected.let { isCreaterShortcut ->
+                                        it.copy(
+                                            downloadTypes = selectedDownloadTypes,
+                                            hpLanguage = selectedHpLanguage,
+                                            uiLanguage = selectedUiLanguage,
+                                            intDownloadFolder = newDownloadFolder,
+                                            intRootInstallationFolder = newInstallationFolder,
+                                            createDesktopShortCut = isCreaterShortcut,
+                                            intShortcutDir = newShortcutFolder
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

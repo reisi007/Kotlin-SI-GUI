@@ -32,7 +32,6 @@ internal fun Button.closeStageOnClickAction(): () -> Unit = {
 }
 
 
-
 internal fun Window.showDirectoryChooser(titleString: String, initalPath: Path = Paths.get(".")): Path? =
     DirectoryChooser().apply {
         title = titleString

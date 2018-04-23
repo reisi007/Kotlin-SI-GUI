@@ -1,10 +1,7 @@
 package at.reisisoft.sigui.ui
 
 import at.reisisoft.sigui.commons.downloads.LibreOfficeDownloadFileType
-import at.reisisoft.ui.closeStageOnClick
-import at.reisisoft.ui.closeStageOnClickAction
-import at.reisisoft.ui.doLocalizedReplace
-import at.reisisoft.ui.preferWindowSize
+import at.reisisoft.ui.*
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXML
@@ -12,8 +9,10 @@ import javafx.fxml.Initializable
 import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.control.Label
+import javafx.scene.control.OverrunStyle
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
+import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
 import java.net.URL
 import java.nio.file.Path
@@ -77,6 +76,8 @@ class DownloadUiConroller : Initializable {
         languageSupport.doLocalizedReplace(ResourceBundleUtils.DOWNLAODER_DOWNLOAD_TO, downloadPath) { finalString ->
             pathLabel.text = finalString
         }
+        urlLabel.addDefaultTooltip()
+        pathLabel.addDefaultTooltip()
 
         val cancel = languageSupport.getString(ResourceBundleUtils.CANCEL)
         downloads.forEach { type, fileName ->
@@ -90,10 +91,14 @@ class DownloadUiConroller : Initializable {
                     Label().apply {
                         text = fileName
                         children.add(this)
+                        addDefaultTooltip()
+                        isWrapText = true
+                        textOverrun = OverrunStyle.LEADING_ELLIPSIS
                     }
                     Button().apply {
                         text = cancel
                         children.add(this)
+                        minWidth = Region.USE_PREF_SIZE
                         onAction = EventHandler {
                             downloads.remove(type)
                             toFill.children.remove(container)

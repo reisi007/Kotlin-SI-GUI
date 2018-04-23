@@ -1,5 +1,6 @@
 package at.reisisoft.sigui.ui
 
+import at.reisisoft.NamingUtils
 import at.reisisoft.format
 import at.reisisoft.orElse
 import at.reisisoft.sigui.OSUtils
@@ -10,6 +11,7 @@ import at.reisisoft.sigui.download.DownloadManager
 import at.reisisoft.sigui.download.DownloadProgressListener
 import at.reisisoft.sigui.hostspecific.SHORTCUT_CREATOR
 import at.reisisoft.sigui.settings.SiGuiSetting
+import at.reisisoft.sigui.settings.asMutableMap
 import at.reisisoft.ui.*
 import at.reisisoft.ui.JavaFxUtils.showError
 import at.reisisoft.withChild
@@ -23,6 +25,7 @@ import javafx.scene.control.*
 import javafx.scene.layout.Pane
 import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
+import javafx.stage.FileChooser
 import javafx.stage.Stage
 import javafx.util.StringConverter
 import java.net.URL
@@ -420,7 +423,7 @@ class MainUIController : Initializable, AutoCloseable {
 
 
     private fun updateSelection(location: DownloadLocation, information: DownloadInformation) {
-        settings = settings.copy(downloadSelection = location to information).apply { asyncPersist() }
+        settings = settings.copy(downloadSelection = location to information)
     }
 
     private fun SiGuiSetting.asyncPersist() = executorService.submit { this.persist() }
@@ -443,11 +446,19 @@ class MainUIController : Initializable, AutoCloseable {
     @FXML
     private lateinit var runHelp: Button
     @FXML
+    private lateinit var openMain: Button
+    @FXML
+    private lateinit var openHelp: Button
+    @FXML
+    private lateinit var openSdk: Button
+    @FXML
     private lateinit var installSdkText: Label
     @FXML
     private lateinit var installHelpText: Label
     @FXML
     private lateinit var installationRootPane: Region
+    @FXML
+    private lateinit var installfolderTextfield: TextField
 
     private fun initInstallation() {
         arrayOf<Pair<Label, (Path) -> SiGuiSetting>>(
@@ -463,18 +474,65 @@ class MainUIController : Initializable, AutoCloseable {
             label.textProperty().addListener { _, _, newString ->
                 onTextUpdate(Paths.get(newString)).apply {
                     settings = this
-                    asyncPersist()
                 }
             }
             //Add tooltip to label
-            label.addDefaultTooltip();
+            label.addDefaultTooltip()
         }
 
         installMainText.text = settings.installFileMain?.toString().orElse("")
         installHelpText.text = settings.installFileHelp?.toString().orElse("")
         installSdkText.text = settings.installFileSdk?.toString().orElse("")
 
+        installMainText.textProperty().addListener { _, _, new ->
+            installfolderTextfield.text = NamingUtils.extractName(Paths.get(new).fileName.toString())
+        }
+
         startInstallButton.prefWidthProperty().bind(installationRootPane.widthProperty())
+
+        installfolderTextfield.text = settings.installName
+        //Setup subfolder name
+        installfolderTextfield.textProperty().addListener { _, _, newValue: String? ->
+            if (newValue != null && !newValue.isBlank())
+                settings = settings.copy(installName = newValue)
+        }
+
+        val extensionFilter = languageSupport.getReplacedString(ResourceBundleUtils.CHOOSE_LIBREOFFICE).let {
+            FileChooser.ExtensionFilter(it, *OSUtils.CURRENT_OS.getFileExtensions())
+        }
+        arrayOf(
+            openMain to installMainText,
+            openHelp to installHelpText,
+            openSdk to installSdkText
+        ).forEach { (button, label) ->
+            button.onAction = EventHandler {
+                try {
+                    if (label.text.isBlank())
+                        null
+                    else
+                        Paths.get(label.text).parent
+                } catch (e: Exception) {
+                    null
+                } ?: kotlin.run { settings.downloadFolder }.let {
+                    button.scene.window.showFileChooser(
+                        languageSupport.getString(ResourceBundleUtils.OPTIONS_OPENFILE),
+                        it,
+                        extensionFilter
+                    )?.let {
+                        label.text = it.toString()
+                    }
+                }
+            }
+        }
+        arrayOf(
+            resetMain to installMainText,
+            resetHelp to installHelpText,
+            resetSdk to installSdkText
+        ).forEach { (button, label) ->
+            button.onAction = EventHandler {
+                label.text = ""
+            }
+        }
 
     }
 
@@ -507,16 +565,24 @@ class MainUIController : Initializable, AutoCloseable {
             installHelpText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
             installSdkText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
         }.let {
-            OSUtils.CURRENT_OS.downloadTypesForOS().stream().filter { it != DownloadType.WINDOWSEXE }.asSequence()
-                .first().let { os ->
-                    ParallelInstallation.performInstallationFor(
-                        it,
-                        settings.rootInstallationFolder,
-                        os,
-                        SHORTCUT_CREATOR,
-                        settings.desktopDir
-                    )
-                }
+            settings.installName.let { installName ->
+                OSUtils.CURRENT_OS.downloadTypesForOS().stream().filter { it != DownloadType.WINDOWSEXE }.asSequence()
+                    .first().let { os ->
+                        ParallelInstallation.performInstallationFor(
+                            it,
+                            settings.rootInstallationFolder withChild installName,
+                            os,
+                            SHORTCUT_CREATOR,
+                            settings.shortcutDir
+                        )
+                    }
+                    .also {
+                        settings = settings.copy(managedInstalledVersions =
+                        settings.managedInstalledVersions.asMutableMap().apply {
+                            putIfAbsent(installName, it)
+                        })
+                    }
+            }
         }
     }
 }

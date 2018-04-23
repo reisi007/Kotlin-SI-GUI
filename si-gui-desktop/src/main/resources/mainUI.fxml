@@ -49,7 +49,8 @@
                               BorderPane.alignment="CENTER">
                             <VBox spacing="7">
                                 <Label alignment="BASELINE_LEFT" text="%install.subfolder"/>
-                                <TextField promptText="%install.subfolder.hint" HBox.hgrow="ALWAYS"/>
+                                <TextField fx:id="installfolderTextfield" promptText="%install.subfolder.hint"
+                                           HBox.hgrow="ALWAYS"/>
                             </VBox>
                             <HBox alignment="BOTTOM_CENTER" fillHeight="false" spacing="3.0"
                                   BorderPane.alignment="BOTTOM_CENTER">
@@ -63,6 +64,9 @@
                                 <BorderPane.margin>
                                     <Insets bottom="7.0" top="7.0"/>
                                 </BorderPane.margin>
+                                <VBox.margin>
+                                    <Insets bottom="4.0"/>
+                                </VBox.margin>
                             </HBox>
                         </VBox>
                     </center>
@@ -80,8 +84,10 @@
                                     </font>
                                 </Label>
                                 <HBox spacing="3">
-                                    <Button fx:id="resetMain" text="%reset" HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="openMain" text="%options.choosefile" HBox.hgrow="ALWAYS"/>
                                     <Button fx:id="runMain" text="%run" HBox.hgrow="NEVER"/>
+                                    <Button fx:id="resetMain" text="%reset" HBox.hgrow="NEVER"/>
+
                                 </HBox>
                             </VBox>
                             <VBox spacing="7">
@@ -93,8 +99,10 @@
                                     </font>
                                 </Label>
                                 <HBox spacing="3">
-                                    <Button fx:id="resetHelp" text="%reset" HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="openHelp" text="%options.choosefile" HBox.hgrow="ALWAYS"/>
                                     <Button fx:id="runHelp" text="%run" HBox.hgrow="NEVER"/>
+                                    <Button fx:id="resetHelp" text="%reset" HBox.hgrow="ALWAYS"/>
+
                                 </HBox>
                             </VBox>
                             <VBox spacing="7">
@@ -106,8 +114,10 @@
                                     </font>
                                 </Label>
                                 <HBox spacing="3">
-                                    <Button fx:id="resetSdk" text="%reset" HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="openSdk" text="%options.choosefile" HBox.hgrow="NEVER"/>
                                     <Button fx:id="runSdk" text="%run" HBox.hgrow="NEVER"/>
+                                    <Button fx:id="resetSdk" text="%reset" HBox.hgrow="NEVER"/>
+
                                 </HBox>
                             </VBox>
                         </VBox>

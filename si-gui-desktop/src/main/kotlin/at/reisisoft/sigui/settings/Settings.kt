@@ -22,9 +22,9 @@ internal data class SiGuiSetting(
     private var intRootInstallationFolder: Path? = null,
     @SerializedName("downloadFolder")
     private var intDownloadFolder: Path? = null,
-    @SerializedName("desktop")
-    private var intDesktopDir: Path? = null,
-    val installName: String? = null,
+    @SerializedName("shortcutFolder")
+    private var intShortcutDir: Path? = null,
+    val installName: String = "",
     val createDesktopShortCut: Boolean = true,
     val installFileMain: Path? = null,
     val installFileHelp: Path? = null,
@@ -52,11 +52,11 @@ internal data class SiGuiSetting(
             return intRootInstallationFolder!!
         }
 
-    val desktopDir: Path
+    val shortcutDir: Path
         get() {
-            if (intDesktopDir == null)
-                intDesktopDir = Paths.get(System.getProperty("user.home"), "Desktop")
-            return intDesktopDir!!
+            if (intShortcutDir == null)
+                intShortcutDir = Paths.get(System.getProperty("user.home"), "Desktop")
+            return intShortcutDir!!
         }
 }
 

@@ -16,16 +16,18 @@ object JavaFxUtils {
     @JvmStatic
     fun showError(exception: Throwable): Unit = exception.stackTraceAsString().let(::showError)
 
-    internal fun showError(errorMessage: String) = showAlert(errorMessage)
+    internal fun showError(errorMessage: String) = runOnUiThread {
+        Alert(Alert.AlertType.ERROR, errorMessage, ButtonType.OK).apply {
+            dialogPane.content =
+                    TextArea().apply {
+                        text = errorMessage
+                    }
+        }.showAndWait()
+    }
 
     internal fun showAlert(errorMessage: String, alertType: Alert.AlertType = Alert.AlertType.ERROR): Unit =
         runOnUiThread {
-            Alert(alertType, errorMessage, ButtonType.OK).apply {
-                dialogPane.content =
-                        TextArea().apply {
-                            text = errorMessage
-                        }
-            }.showAndWait()
+            Alert(alertType, errorMessage, ButtonType.OK).showAndWait()
         }
 }
 

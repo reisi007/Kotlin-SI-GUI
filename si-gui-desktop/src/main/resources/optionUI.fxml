@@ -5,9 +5,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 <?import org.controlsfx.control.CheckComboBox?>
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
+<AnchorPane prefHeight="380.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.OptionUIController">
-    <BorderPane fx:id="rootLayout" prefHeight="400.0" prefWidth="600.0">
+    <BorderPane fx:id="rootLayout" prefHeight="380.0" prefWidth="600.0">
         <bottom>
             <ButtonBar prefHeight="40.0" BorderPane.alignment="CENTER">
                 <buttons>
@@ -30,9 +30,13 @@
                     <Label text="%options.uilang"/>
                     <ComboBox fx:id="uiLang"/>
                 </HBox>
-                <HBox alignment="CENTER" spacing="7.0">
+                <HBox alignment="CENTER" prefHeight="0.0" spacing="3.0">
+                    <CheckBox fx:id="shortcutCreationEnabled" alignment="CENTER" text="%option.shortcut.create"/>
+                </HBox>
+                <HBox alignment="CENTER" prefHeight="90.0" spacing="7.0">
                     <Label fx:id="downloadFolderLabel" text="Set by code" wrapText="true"/>
-                    <Label fx:id="downloadFolderText" alignment="CENTER" text="Set by code" wrapText="true">
+                    <Label fx:id="downloadFolderText" alignment="CENTER" text="Set by code"
+                           textOverrun="LEADING_ELLIPSIS" wrapText="true">
                         <font>
                             <Font name="Monospaced Regular" size="12.0"/>
                         </font>
@@ -42,12 +46,24 @@
                 </HBox>
                 <HBox alignment="CENTER" prefHeight="75.0" spacing="7.0">
                     <Label fx:id="installFolderLabel" text="Set by code" wrapText="true"/>
-                    <Label fx:id="installFolderText" alignment="CENTER" text="Set by code" wrapText="true">
+                    <Label fx:id="installFolderText" alignment="CENTER" text="Set by code"
+                           textOverrun="LEADING_ELLIPSIS" wrapText="true">
                         <font>
                             <Font name="Monospaced Regular" size="12.0"/>
                         </font>
                     </Label>
                     <Button fx:id="installFolderButton" alignment="CENTER" text="%options.choosefolder"/>
+                </HBox>
+
+                <HBox alignment="CENTER" prefHeight="75.0" spacing="3.0">
+                    <Label fx:id="shortcutCreationLabel" text="%options.shortcut.dir" wrapText="true"/>
+                    <Label fx:id="shortcutCreationText" text="Set by code" textOverrun="LEADING_ELLIPSIS"
+                           wrapText="true">
+                        <font>
+                            <Font name="Monospaced Regular" size="12.0"/>
+                        </font>
+                    </Label>
+                    <Button fx:id="shortcutCreationButton" alignment="CENTER" text="%options.choosefolder"/>
                 </HBox>
             </VBox>
         </center>

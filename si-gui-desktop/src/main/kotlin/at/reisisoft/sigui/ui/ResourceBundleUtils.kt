@@ -30,6 +30,7 @@ internal object ResourceBundleUtils {
     val ERROR_FILEEXISRS = "$ERROR.fileexists"
     private val MENU = "menu"
     val MENU_MANAGER = "$MENU.manager"
+    val CHOOSE_LIBREOFFICE = "install.choose"
 
     internal fun getSupportedLanguages(): Set<Locale> =
         newLocaleTreeSet().apply { add(Locale.forLanguageTag(EN_US)) }.apply {

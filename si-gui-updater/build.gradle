@@ -1,0 +1,10 @@
+group 'at.reisisoft'
+version '0.1-SNAPSHOT'
+
+apply plugin: 'java'
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.foo.bar.MainClass'
+    }
+}

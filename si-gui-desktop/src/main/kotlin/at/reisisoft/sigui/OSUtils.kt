@@ -17,15 +17,21 @@ object OSUtils {
     enum class OS {
         WINDOWS, LINUX, MAC;
 
-        fun downloadTypesForOS(): List<DownloadType> = when {
-            this == WINDOWS -> listOf(DownloadType.WINDOWSEXE, DownloadType.WINDOWS32, DownloadType.WINDOWS64)
-            this == LINUX -> listOf(
+        fun downloadTypesForOS(): List<DownloadType> = when (this) {
+            WINDOWS -> listOf(DownloadType.WINDOWSEXE, DownloadType.WINDOWS32, DownloadType.WINDOWS64)
+            LINUX -> listOf(
                 DownloadType.LINUX_DEB_32,
                 DownloadType.LINUX_DEB_64,
                 DownloadType.LINUX_RPM_32,
                 DownloadType.LINUX_RPM_64
             )
             else -> listOf(DownloadType.MAC)
+        }
+
+        fun getFileExtensions(): Array<String> = when (this) {
+            WINDOWS -> arrayOf("*.exe", "*.msi")
+            LINUX -> arrayOf("*tar.gz")
+            MAC -> arrayOf("dmg")
         }
     }
 }
