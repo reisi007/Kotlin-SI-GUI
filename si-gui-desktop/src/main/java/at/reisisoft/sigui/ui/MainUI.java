@@ -2,6 +2,7 @@ package at.reisisoft.sigui.ui;
 
 import at.reisisoft.sigui.settings.SettingsKt;
 import at.reisisoft.sigui.settings.SiGuiSetting;
+import at.reisisoft.ui.JavaFXKt;
 import at.reisisoft.ui.JavaFxUtils;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -19,11 +20,7 @@ public class MainUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Thread.currentThread().setUncaughtExceptionHandler((thread, t) -> {
-            System.err.println("Unexpected exception!");
-            t.printStackTrace();
-            JavaFxUtils.showError(t);
-        });
+        Thread.currentThread().setUncaughtExceptionHandler(JavaFXKt.getUNCAUGHT_EXCEPTION_HANDLER());
         primaryStage.setWidth(690);
         primaryStage.setHeight(330);
         primaryStage.setResizable(false);
@@ -41,6 +38,7 @@ public class MainUI extends Application {
     }
 
     public static void main(String[] args) {
+        Thread.currentThread().setUncaughtExceptionHandler(JavaFXKt.getUNCAUGHT_EXCEPTION_HANDLER());
         launch(args);
     }
 

@@ -65,3 +65,9 @@ internal fun Label.addDefaultTooltip() {
         // Cannot change delay in Java 8
     }
 }
+
+val UNCAUGHT_EXCEPTION_HANDLER = Thread.UncaughtExceptionHandler { thread, t ->
+    System.err.println("Unexpected exception!")
+    t.printStackTrace()
+    JavaFxUtils.showError(t)
+}

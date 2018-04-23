@@ -34,6 +34,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
 import kotlin.collections.ArrayList
 import kotlin.streams.asSequence
 
@@ -282,7 +283,12 @@ class MainUIController : Initializable, AutoCloseable {
     }
 
     private val executorServiceDelegate = lazy {
-        Executors.newCachedThreadPool()!!
+        val tf = ThreadFactory {
+            Thread(it).apply {
+                uncaughtExceptionHandler = UNCAUGHT_EXCEPTION_HANDLER
+            }
+        }
+        Executors.newCachedThreadPool(tf)!!
     }
 
     private val executorService by executorServiceDelegate
