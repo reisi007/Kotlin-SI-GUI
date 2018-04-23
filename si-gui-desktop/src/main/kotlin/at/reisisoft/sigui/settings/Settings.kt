@@ -30,7 +30,7 @@ internal data class SiGuiSetting(
     val downloadTypes: List<DownloadType> = OSUtils.CURRENT_OS.downloadTypesForOS(),
     val downloadedVersions: Map<DownloadLocation, Set<DownloadInformation>> = emptyMap(),
     val availableHpLanguages: Collection<Locale> = emptyList(),
-    val managedInstalledVersions: Map<String/*Displayname*/, List<Path>/*List of files / folders, which should be deleted*/> = emptyMap()
+    val managedInstalledVersions: Map<String/*Displayname*/, Array<Path>/*List of files / folders, which should be deleted*/> = emptyMap()
 ) {
     internal fun persist() = storeSettings(this)
 

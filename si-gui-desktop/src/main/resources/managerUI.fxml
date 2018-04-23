@@ -17,7 +17,7 @@
             </ButtonBar>
         </bottom>
         <center>
-            <CheckListView prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER"/>
+            <CheckListView fx:id="checkListView" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER"/>
         </center>
     </BorderPane>
 </AnchorPane>

@@ -5,7 +5,9 @@ import javafx.application.Platform
 import javafx.beans.binding.DoubleExpression
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
-import javafx.scene.control.*
+import javafx.scene.control.Button
+import javafx.scene.control.Label
+import javafx.scene.control.Tooltip
 import javafx.scene.layout.Pane
 import javafx.scene.text.Font
 import javafx.stage.DirectoryChooser
@@ -29,15 +31,7 @@ internal fun Button.closeStageOnClickAction(): () -> Unit = {
     }
 }
 
-internal fun showError(exception: Throwable): Unit = exception.stackTraceAsString().let(::showError)
 
-internal fun showError(errorMessage: String) = showAlert(errorMessage)
-
-internal fun showAlert(errorMessage: String, alertType: Alert.AlertType = Alert.AlertType.ERROR): Unit = runOnUiThread {
-    Alert(alertType, errorMessage, ButtonType.OK).apply { showAndWait() }
-}
-
-internal fun showWarning(warningMessage: String) = showAlert(warningMessage, Alert.AlertType.WARNING)
 
 internal fun Window.showDirectoryChooser(titleString: String, initalPath: Path = Paths.get(".")): Path? =
     DirectoryChooser().apply {

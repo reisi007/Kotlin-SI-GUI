@@ -19,12 +19,17 @@ public class MainUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        Thread.currentThread().setUncaughtExceptionHandler((thread, t) -> {
+            System.err.println("Unexpected exception!");
+            t.printStackTrace();
+            JavaFxUtils.showError(t);
+        });
         primaryStage.setWidth(690);
         primaryStage.setHeight(330);
         primaryStage.setResizable(false);
         SiGuiSetting settings = SettingsKt.loadSettings();
         Locale.setDefault(settings.getUiLanguage());
-        FXMLLoader loader = JavaFxUtils.loadFXML("mainUi.fxml");
+        FXMLLoader loader = JavaFxUtils.loadFXML("mainUI.fxml");
         ResourceBundle languageSupport = ResourceBundle.getBundle("uistrings.sigui-desktop");
         loader.setResources(languageSupport);
         primaryStage.setTitle(languageSupport.getString(ResourceBundleUtils.INSTANCE.getAPPNAME()));

@@ -8,6 +8,7 @@ import at.reisisoft.sigui.download.DownloadManager
 import at.reisisoft.sigui.download.DownloadProgressListener
 import at.reisisoft.sigui.settings.SiGuiSetting
 import at.reisisoft.ui.*
+import at.reisisoft.ui.JavaFxUtils.showError
 import at.reisisoft.withChild
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
@@ -465,9 +466,9 @@ class MainUIController : Initializable, AutoCloseable {
             label.addDefaultTooltip();
         }
 
-        installMainText.text = settings.installFileMain?.let { it.toString() }.orElse("")
-        installHelpText.text = settings.installFileHelp?.let { it.toString() }.orElse("")
-        installSdkText.text = settings.installFileSdk?.let { it.toString() }.orElse("")
+        installMainText.text = settings.installFileMain?.toString().orElse("")
+        installHelpText.text = settings.installFileHelp?.toString().orElse("")
+        installSdkText.text = settings.installFileSdk?.toString().orElse("")
 
         startInstallButton.prefWidthProperty().bind(installationRootPane.widthProperty())
 
