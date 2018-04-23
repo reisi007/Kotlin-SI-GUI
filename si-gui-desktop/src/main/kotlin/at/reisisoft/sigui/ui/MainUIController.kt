@@ -2,10 +2,13 @@ package at.reisisoft.sigui.ui
 
 import at.reisisoft.format
 import at.reisisoft.orElse
+import at.reisisoft.sigui.OSUtils
 import at.reisisoft.sigui.commons.downloads.*
+import at.reisisoft.sigui.commons.installation.ParallelInstallation
 import at.reisisoft.sigui.download.DownloadFinishedEvent
 import at.reisisoft.sigui.download.DownloadManager
 import at.reisisoft.sigui.download.DownloadProgressListener
+import at.reisisoft.sigui.hostspecific.SHORTCUT_CREATOR
 import at.reisisoft.sigui.settings.SiGuiSetting
 import at.reisisoft.ui.*
 import at.reisisoft.ui.JavaFxUtils.showError
@@ -29,6 +32,7 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
+import kotlin.streams.asSequence
 
 class MainUIController : Initializable, AutoCloseable {
 
@@ -496,4 +500,23 @@ class MainUIController : Initializable, AutoCloseable {
 
     //Menu
     private fun initMenu() {}
+
+    fun performParallelInstallation(actionEvent: ActionEvent) = executorService.submit {
+        mutableListOf<String>().apply {
+            installMainText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+            installHelpText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+            installSdkText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+        }.let {
+            OSUtils.CURRENT_OS.downloadTypesForOS().stream().filter { it != DownloadType.WINDOWSEXE }.asSequence()
+                .first().let { os ->
+                    ParallelInstallation.performInstallationFor(
+                        it,
+                        settings.rootInstallationFolder,
+                        os,
+                        SHORTCUT_CREATOR,
+                        settings.desktopDir
+                    )
+                }
+        }
+    }
 }

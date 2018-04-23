@@ -22,6 +22,10 @@ internal data class SiGuiSetting(
     private var intRootInstallationFolder: Path? = null,
     @SerializedName("downloadFolder")
     private var intDownloadFolder: Path? = null,
+    @SerializedName("desktop")
+    private var intDesktopDir: Path? = null,
+    val installName: String? = null,
+    val createDesktopShortCut: Boolean = true,
     val installFileMain: Path? = null,
     val installFileHelp: Path? = null,
     val installFileSdk: Path? = null,
@@ -46,6 +50,13 @@ internal data class SiGuiSetting(
             if (intRootInstallationFolder == null)
                 intRootInstallationFolder = Files.createTempDirectory("si-gui-installs")
             return intRootInstallationFolder!!
+        }
+
+    val desktopDir: Path
+        get() {
+            if (intDesktopDir == null)
+                intDesktopDir = Paths.get(System.getProperty("user.home"), "Desktop")
+            return intDesktopDir!!
         }
 }
 

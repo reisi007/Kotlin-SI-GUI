@@ -45,19 +45,26 @@
                                 text="%cancel.dl" BorderPane.alignment="CENTER"/>
                     </bottom>
                     <center>
-                        <HBox alignment="BOTTOM_CENTER" fillHeight="false" spacing="3.0"
-                              BorderPane.alignment="BOTTOM_CENTER">
-                            <ProgressBar fx:id="downloadProgressBar" prefHeight="18.0" prefWidth="141.0" progress="0.0"
-                                         HBox.hgrow="ALWAYS"/>
-                            <Label fx:id="downloadProgressLabel" text="0.0%">
-                                <HBox.margin>
-                                    <Insets left="4.0" right="4.0"/>
-                                </HBox.margin>
-                            </Label>
-                            <BorderPane.margin>
-                                <Insets bottom="7.0" top="7.0"/>
-                            </BorderPane.margin>
-                        </HBox>
+                        <VBox alignment="BOTTOM_CENTER" prefHeight="100.0" prefWidth="200.0" spacing="7.0"
+                              BorderPane.alignment="CENTER">
+                            <VBox spacing="7">
+                                <Label alignment="BASELINE_LEFT" text="%install.subfolder"/>
+                                <TextField promptText="%install.subfolder.hint" HBox.hgrow="ALWAYS"/>
+                            </VBox>
+                            <HBox alignment="BOTTOM_CENTER" fillHeight="false" spacing="3.0"
+                                  BorderPane.alignment="BOTTOM_CENTER">
+                                <ProgressBar fx:id="downloadProgressBar" prefHeight="18.0" prefWidth="141.0"
+                                             progress="0.0" HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="downloadProgressLabel" text="0.0%">
+                                    <HBox.margin>
+                                        <Insets left="4.0" right="4.0"/>
+                                    </HBox.margin>
+                                </Label>
+                                <BorderPane.margin>
+                                    <Insets bottom="7.0" top="7.0"/>
+                                </BorderPane.margin>
+                            </HBox>
+                        </VBox>
                     </center>
                 </BorderPane>
                 <BorderPane fx:id="installationRootPane" prefHeight="200.0" prefWidth="200.0"
@@ -106,7 +113,8 @@
                         </VBox>
                     </center>
                     <bottom>
-                        <Button fx:id="startInstallButton" mnemonicParsing="false" text="%downloader.startdl"
+                        <Button fx:id="startInstallButton" mnemonicParsing="false"
+                                onAction="#performParallelInstallation" text="%install.start"
                                 BorderPane.alignment="CENTER">
                             <BorderPane.margin>
                                 <Insets top="7.0"/>
