@@ -1,5 +1,5 @@
 group 'at.reisisoft'
-version '0.1-SNAPSHOT'
+version '0.1-SNAPSHOT~' +new Date().format('yyyy_MM_dd_HHmm')
 
 apply plugin: 'kotlin'
 apply plugin: 'java'
@@ -48,5 +48,27 @@ compileTestKotlin {
 jar {
     manifest {
         attributes 'version': version
+    }
+}
+
+distZip {
+    //https://discuss.gradle.org/t/customise-distzip-to-change-root-directory-name/17622/6
+    //The target zipfile name should be versioned but
+    //internal root directory not. By default the distZip
+    //task uses the same property (archiveName) for
+    //both. To workaround, suppress the version in
+    //the archiveName property (by setting version = null)
+    //then, once the task is complete, we rename the
+    //zip as a post-processing step to add the version
+    //back on.
+
+    //note that archivePath is a derived property.
+    //its return value is sensitive to the version
+    //property (among others).
+
+    def versionedPath = archivePath
+    version = null
+    doLast {
+        archivePath.renameTo(versionedPath)
     }
 }

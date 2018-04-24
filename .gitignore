@@ -7,3 +7,4 @@ build/
 *.iml
 #SI-GUI updater
 last_update.txt
+/kotlin-si-gui

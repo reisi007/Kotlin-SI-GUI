@@ -4,10 +4,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.AbstractMap;
 import java.util.Comparator;
 import java.util.Map;
@@ -18,7 +15,7 @@ import java.util.zip.ZipInputStream;
 public class Updater {
 
     private static final String updaterUrl = "https://tdf.io/kotlinsiguiupdaterendpoint";
-    private static final Path siGuiInstallFolder = Paths.get(".", "si-gui");
+    private static final Path siGuiInstallFolder = Paths.get(".", "kotlin-si-gui").toAbsolutePath().normalize();
     private static final String settingFilename = "si-gui.settings.json";
 
     public static void main(String[] args) {
@@ -61,17 +58,17 @@ public class Updater {
                         try {
                             Files.deleteIfExists(it);
                         } catch (IOException e) {
-                            throw new UncheckedIOException(e);
+                            //Ignore
                         }
                     });
                     //Extract new version
                     extractZip(tmpFile, siGuiInstallFolder);
+                    //Start SI GUI
+                    startSiGui();
                     //Save etag
                     try (BufferedWriter writer = Files.newBufferedWriter(lastUpdatePath, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
                         writer.write(online.getKey());
                     }
-                    //Start SI GUI
-                    startSiGui();
                 } finally {
                     Files.deleteIfExists(tmpFile);
                 }
@@ -87,8 +84,11 @@ public class Updater {
             ZipEntry curEntry;
             Path outFile;
             while ((curEntry = zis.getNextEntry()) != null) {
+                if (curEntry.isDirectory())
+                    continue;
                 outFile = out.resolve(curEntry.getName());
-                Files.copy(zis, outFile);
+                Files.createDirectories(outFile.getParent());
+                Files.copy(zis, outFile, StandardCopyOption.REPLACE_EXISTING);
             }
         }
     }
@@ -120,7 +120,12 @@ public class Updater {
 
     private static final Path lastUpdatePath = Paths.get(".", "last_update.txt");
 
-    private static void startSiGui() {
-        throw new UnsupportedOperationException("Starting SI-GUI not implemented yet!");
+    public static void startSiGui() throws Exception {
+        boolean isWindows = System.getProperty("os.name").toLowerCase().contains("wind");
+        Path scriptFolder = Files.list(siGuiInstallFolder).findFirst().get().resolve("bin");
+        if (isWindows)
+            new ProcessBuilder("cmd.exe", "/c", "si-gui-desktop.bat").directory(scriptFolder.toFile()).inheritIO().start();
+        else
+            new ProcessBuilder("si-gui-desktop").directory(scriptFolder.toFile()).inheritIO().start();
     }
 }
