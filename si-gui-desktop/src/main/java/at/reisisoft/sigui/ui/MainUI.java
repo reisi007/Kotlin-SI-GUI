@@ -1,5 +1,6 @@
 package at.reisisoft.sigui.ui;
 
+import at.reisisoft.sigui.ManifestUtils;
 import at.reisisoft.sigui.settings.SettingsKt;
 import at.reisisoft.sigui.settings.SiGuiSetting;
 import at.reisisoft.ui.JavaFXKt;
@@ -12,6 +13,7 @@ import javafx.stage.Stage;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class MainUI extends Application {
@@ -21,6 +23,10 @@ public class MainUI extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Thread.currentThread().setUncaughtExceptionHandler(JavaFXKt.getUNCAUGHT_EXCEPTION_HANDLER());
+        //TODO remove from here and integrate in UI
+        Optional.ofNullable(ManifestUtils.INSTANCE.loadManifest()).ifPresent(it ->
+                System.out.println("Build timestamp (TMP) " + it.getMainAttributes().getValue("Build-Timestamp"))
+        );
         primaryStage.setResizable(false);
         SiGuiSetting settings = SettingsKt.loadSettings();
         Locale.setDefault(settings.getUiLanguage());

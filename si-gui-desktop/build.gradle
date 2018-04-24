@@ -1,5 +1,7 @@
+import java.text.SimpleDateFormat
+
 group 'at.reisisoft'
-version '0.1-SNAPSHOT~' +new Date().format('yyyy_MM_dd_HHmm')
+version '0.1-SNAPSHOT~' + new Date().format('yyyy_MM_dd_HHmm')
 
 apply plugin: 'kotlin'
 apply plugin: 'java'
@@ -46,8 +48,16 @@ compileTestKotlin {
 }
 
 jar {
+    //http://andresalmiray.com/customize-jar-manifest-entries-with-maven-gradle/
     manifest {
-        attributes 'version': version
+        attributes(
+                'Kotlin-SI-GUI-version': version,
+                'Built-By': System.properties['user.name'],
+                'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+                'Gradle-version': "${gradle.gradleVersion}",
+                'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                'Build-OS': "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+        )
     }
 }
 
