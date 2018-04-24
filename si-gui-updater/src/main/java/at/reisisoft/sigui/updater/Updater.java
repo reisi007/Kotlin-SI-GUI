@@ -126,6 +126,6 @@ public class Updater {
         if (isWindows)
             new ProcessBuilder("cmd.exe", "/c", "si-gui-desktop.bat").directory(scriptFolder.toFile()).inheritIO().start();
         else
-            new ProcessBuilder("si-gui-desktop").directory(scriptFolder.toFile()).inheritIO().start();
+            new ProcessBuilder("./si-gui-desktop").directory(scriptFolder.toFile()).inheritIO().start();
     }
 }
