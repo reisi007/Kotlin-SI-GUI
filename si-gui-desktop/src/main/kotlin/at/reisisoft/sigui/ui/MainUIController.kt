@@ -352,6 +352,9 @@ class MainUIController : Initializable, AutoCloseable {
                                         title =
                                                 languageSupport.getString(ResourceKey.DOWNLOADER_TITLE)
                                         scene = Scene(parent)
+                                        onCloseRequest = EventHandler {
+                                            controller.downloads.clear()
+                                        }
                                     }.showAndWait()
 
                                     downloadWindowsOpenTaskStarted = false
@@ -565,33 +568,38 @@ class MainUIController : Initializable, AutoCloseable {
     private fun initMenu() {}
 
     fun performParallelInstallation(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) = executorService.submit {
-        mutableListOf<String>().apply {
-            installMainText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
-            installHelpText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
-            installSdkText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
-        }.let {
-            settings.installName.let { installName ->
-                OSUtils.CURRENT_OS.downloadTypesForOS().stream().filter { it != DownloadType.WINDOWSEXE }.asSequence()
-                    .first().let { os ->
-                        ParallelInstallation.performInstallationFor(
-                            it,
-                            settings.rootInstallationFolder withChild installName,
-                            os,
-                            SHORTCUT_CREATOR,
-                            settings.shortcutDir
-                        )
-                    }
-                    .also {
-                        settings = settings.copy(managedInstalledVersions =
-                        settings.managedInstalledVersions.asMutableMap().apply {
-                            putIfAbsent(installName, it)
-                        })
-                        showAlert(
-                            languageSupport.getString(ResourceKey.INSTALL_SUCCESS),
-                            Alert.AlertType.INFORMATION
-                        )
-                    }
+        try {
+            mutableListOf<String>().apply {
+                installMainText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+                installHelpText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+                installSdkText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+            }.let {
+                settings.installName.let { installName ->
+                    OSUtils.CURRENT_OS.downloadTypesForOS().stream().filter { it != DownloadType.WINDOWSEXE }
+                        .asSequence()
+                        .first().let { os ->
+                            ParallelInstallation.performInstallationFor(
+                                it,
+                                settings.rootInstallationFolder withChild installName,
+                                os,
+                                SHORTCUT_CREATOR,
+                                settings.shortcutDir
+                            )
+                        }
+                        .also {
+                            settings = settings.copy(managedInstalledVersions =
+                            settings.managedInstalledVersions.asMutableMap().apply {
+                                putIfAbsent(installName, it)
+                            })
+                            showAlert(
+                                languageSupport.getString(ResourceKey.INSTALL_SUCCESS),
+                                Alert.AlertType.INFORMATION
+                            )
+                        }
+                }
             }
+        } catch (e: Exception) {
+            showError(e)
         }
     }
 

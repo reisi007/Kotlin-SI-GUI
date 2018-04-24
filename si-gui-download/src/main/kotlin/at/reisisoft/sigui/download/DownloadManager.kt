@@ -47,7 +47,7 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
                         }
                         val BUFFER_SIZE = 1024 * 32
                         connection.getInputStream().let { BufferedInputStream(it, BUFFER_SIZE) }.use { input ->
-                            Files.newOutputStream(to, StandardOpenOption.CREATE_NEW).let { output ->
+                            Files.newOutputStream(to, StandardOpenOption.CREATE_NEW).use { output ->
                                 val buffer = ByteArray(BUFFER_SIZE)
                                 while (continueDownload) {
                                     input.read(buffer).let { readBytes ->

@@ -57,7 +57,10 @@ object ParallelInstallation {
                                 .command(*commandlineArgs)
                                 .start().let {
                                     it.waitFor()
-                                    it.exitValue()
+                                    it.exitValue().let {
+                                        if (it != 0)
+                                            throw WindowsInstallException(it)
+                                    }
                                 }
 
                         }

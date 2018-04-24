@@ -8,3 +8,4 @@ build/
 #SI-GUI updater
 last_update.txt
 /kotlin-si-gui
+/si-gui.settings.json
