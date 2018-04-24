@@ -2,12 +2,9 @@ package at.reisisoft.sigui.ui
 
 import at.reisisoft.sigui.settings.SiGuiSetting
 import at.reisisoft.stream
+import at.reisisoft.ui.*
 import at.reisisoft.ui.JavaFxUtils.showAlert
 import at.reisisoft.ui.JavaFxUtils.showError
-import at.reisisoft.ui.closeStageOnClick
-import at.reisisoft.ui.preferWindowSize
-import at.reisisoft.ui.runOnUiThread
-import at.reisisoft.ui.showWarning
 import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
@@ -24,7 +21,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.stream.Collectors
-import java.util.stream.Stream
 import kotlin.collections.ArrayList
 
 class ManagerUiController : Initializable {
@@ -79,10 +75,8 @@ class ManagerUiController : Initializable {
                     try {
                         items.stream().flatMap { it.value.stream() }.filter { Files.exists(it) }
                             .flatMap {
-                                if (Files.isDirectory(it))
-                                    Files.list(it)
-                                Stream.of(it)
-                            }.filter { Files.exists(it) }.sorted(Comparator.reverseOrder())
+                                Files.walk(it)
+                            }.sorted(Comparator.reverseOrder())
                             .map {
                                 try {
                                     Files.delete(it)
@@ -95,16 +89,14 @@ class ManagerUiController : Initializable {
                             .collect(Collectors.joining(System.lineSeparator())).let {
                                 if (it.isBlank())
                                     showAlert(
-                                        languageSupport.getString(ResourceBundleUtils.INSTALL_SUCCESS),
+                                        languageSupport.getString(ResourceKey.INSTALL_SUCCESS),
                                         Alert.AlertType.INFORMATION
                                     )
-                                else showWarning(languageSupport.getString(ResourceBundleUtils.MANAGER_DELETE_FAILURE) + System.lineSeparator() + System.lineSeparator() + it)
+                                else showWarning(languageSupport.getString(ResourceKey.MANAGER_DELETE_FAILURE) + System.lineSeparator() + System.lineSeparator() + it)
                             }
-
                     } catch (e: Exception) {
                         showError(e)
                     }
-
 
                     runOnUiThread {
                         checkListView.items.removeAll(items)

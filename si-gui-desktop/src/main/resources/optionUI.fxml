@@ -8,68 +8,92 @@
 <AnchorPane prefHeight="380.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.OptionUIController">
     <BorderPane fx:id="rootLayout" prefHeight="380.0" prefWidth="600.0">
-        <bottom>
-            <ButtonBar prefHeight="40.0" BorderPane.alignment="CENTER">
-                <buttons>
-                    <Button fx:id="closeButton" mnemonicParsing="false" text="%options.button.close"/>
-                </buttons>
-            </ButtonBar>
-        </bottom>
-        <center>
-            <VBox spacing="7.0" BorderPane.alignment="CENTER">
-                <HBox alignment="CENTER" prefHeight="0.0" spacing="3.0">
-                    <Label text="%option.downloadTypes"/>
-                    <CheckComboBox fx:id="downloadTypesSelection" HBox.hgrow="ALWAYS"/>
-                </HBox>
-                <HBox alignment="CENTER" prefHeight="0.0" spacing="3.0">
-                    <Label text="%options.hplang"/>
-                    <ComboBox fx:id="helppackLanguages"/>
-                    <Button fx:id="updateHelppackLanguages" mnemonicParsing="false" text="%update"/>
-                </HBox>
-                <HBox alignment="CENTER" prefHeight="0.0" spacing="3.0">
-                    <Label text="%options.uilang"/>
-                    <ComboBox fx:id="uiLang"/>
-                </HBox>
-                <HBox alignment="CENTER" prefHeight="0.0" spacing="3.0">
-                    <CheckBox fx:id="shortcutCreationEnabled" alignment="CENTER" text="%option.shortcut.create"/>
-                </HBox>
-                <HBox alignment="CENTER" prefHeight="90.0" spacing="7.0">
-                    <Label fx:id="downloadFolderLabel" text="Set by code" wrapText="true"/>
-                    <Label fx:id="downloadFolderText" alignment="CENTER" text="Set by code"
-                           textOverrun="LEADING_ELLIPSIS" wrapText="true">
-                        <font>
-                            <Font name="Monospaced Regular" size="12.0"/>
-                        </font>
-                    </Label>
-                    <Button fx:id="downloadFolderButton" alignment="CENTER" contentDisplay="CENTER"
-                            text="%options.choosefolder"/>
-                </HBox>
-                <HBox alignment="CENTER" prefHeight="75.0" spacing="7.0">
-                    <Label fx:id="installFolderLabel" text="Set by code" wrapText="true"/>
-                    <Label fx:id="installFolderText" alignment="CENTER" text="Set by code"
-                           textOverrun="LEADING_ELLIPSIS" wrapText="true">
-                        <font>
-                            <Font name="Monospaced Regular" size="12.0"/>
-                        </font>
-                    </Label>
-                    <Button fx:id="installFolderButton" alignment="CENTER" text="%options.choosefolder"/>
-                </HBox>
-
-                <HBox alignment="CENTER" prefHeight="75.0" spacing="3.0">
-                    <Label fx:id="shortcutCreationLabel" text="%options.shortcut.dir" wrapText="true"/>
-                    <Label fx:id="shortcutCreationText" text="Set by code" textOverrun="LEADING_ELLIPSIS"
-                           wrapText="true">
-                        <font>
-                            <Font name="Monospaced Regular" size="12.0"/>
-                        </font>
-                    </Label>
-                    <Button fx:id="shortcutCreationButton" defaultButton="true" alignment="CENTER"
-                            text="%options.choosefolder"/>
-                </HBox>
-            </VBox>
-        </center>
         <padding>
             <Insets bottom="7.0" left="7.0" right="7.0" top="7.0"/>
         </padding>
+        <center>
+            <GridPane BorderPane.alignment="CENTER">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                </rowConstraints>
+                <Label text="%option.downloadTypes" GridPane.columnSpan="4"/>
+                <CheckComboBox fx:id="downloadTypesSelection" GridPane.columnIndex="4" GridPane.columnSpan="6"/>
+                <Label text="%options.hplang" GridPane.columnSpan="4" GridPane.rowIndex="1"/>
+                <ComboBox fx:id="helppackLanguages" GridPane.columnIndex="4" GridPane.columnSpan="4"
+                          GridPane.rowIndex="1"/>
+                <Button fx:id="updateHelppackLanguages" mnemonicParsing="false" text="%update" GridPane.columnIndex="8"
+                        GridPane.columnSpan="2" GridPane.rowIndex="1"/>
+                <Label text="%options.uilang" GridPane.columnSpan="4" GridPane.rowIndex="2"/>
+                <ComboBox fx:id="uiLang" GridPane.columnIndex="4" GridPane.columnSpan="6" GridPane.rowIndex="2"/>
+                <CheckBox fx:id="shortcutCreationEnabled" alignment="CENTER" text="%option.shortcut.create"
+                          GridPane.columnSpan="10" GridPane.rowIndex="3"/>
+                <Label fx:id="downloadFolderLabel" text="Set by code" wrapText="true" GridPane.columnSpan="5"
+                       GridPane.rowIndex="4"/>
+                <Label fx:id="downloadFolderText" alignment="CENTER" text="Set by code" textOverrun="LEADING_ELLIPSIS"
+                       wrapText="true" GridPane.columnIndex="5" GridPane.columnSpan="3" GridPane.rowIndex="4">
+                    <font>
+                        <Font name="Monospaced Regular" size="12.0"/>
+                    </font>
+                    <padding>
+                        <Insets right="7.0"/>
+                    </padding>
+                </Label>
+                <Button fx:id="downloadFolderButton" alignment="CENTER" contentDisplay="CENTER"
+                        text="%options.choosefolder" GridPane.columnIndex="8" GridPane.columnSpan="2"
+                        GridPane.rowIndex="4"/>
+                <Label fx:id="installFolderLabel" text="Set by code" wrapText="true" GridPane.columnSpan="5"
+                       GridPane.rowIndex="5"/>
+                <Label fx:id="installFolderText" alignment="CENTER" text="Set by code" textOverrun="LEADING_ELLIPSIS"
+                       wrapText="true" GridPane.columnIndex="5" GridPane.columnSpan="3" GridPane.rowIndex="5">
+                    <font>
+                        <Font name="Monospaced Regular" size="12.0"/>
+                    </font>
+                    <padding>
+                        <Insets right="7.0"/>
+                    </padding>
+                </Label>
+                <Button fx:id="installFolderButton" alignment="CENTER" text="%options.choosefolder"
+                        GridPane.columnIndex="8" GridPane.columnSpan="2" GridPane.rowIndex="5"/>
+                <Label fx:id="shortcutCreationLabel" text="%options.shortcut.dir" wrapText="true"
+                       GridPane.columnSpan="5" GridPane.rowIndex="6"/>
+                <Label fx:id="shortcutCreationText" text="Set by code" textOverrun="LEADING_ELLIPSIS" wrapText="true"
+                       GridPane.columnIndex="5" GridPane.columnSpan="3" GridPane.rowIndex="6">
+                    <font>
+                        <Font name="Monospaced Regular" size="12.0"/>
+                    </font>
+                    <padding>
+                        <Insets right="7.0"/>
+                    </padding>
+                </Label>
+                <Button fx:id="shortcutCreationButton" alignment="CENTER" text="%options.choosefolder"
+                        GridPane.columnIndex="8" GridPane.columnSpan="2" GridPane.rowIndex="6"/>
+            </GridPane>
+        </center>
+        <bottom>
+            <ButtonBar prefHeight="40.0" BorderPane.alignment="CENTER">
+                <buttons>
+                    <Button fx:id="closeButton" defaultButton="true" mnemonicParsing="false"
+                            text="%options.button.close"/>
+                </buttons>
+            </ButtonBar>
+        </bottom>
     </BorderPane>
 </AnchorPane>

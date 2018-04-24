@@ -1,19 +1,17 @@
 package at.reisisoft.ui
 
-
 import javafx.application.Platform
 import javafx.beans.binding.DoubleExpression
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
+import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.Tooltip
 import javafx.scene.layout.Pane
 import javafx.scene.text.Font
-import javafx.stage.DirectoryChooser
-import javafx.stage.FileChooser
-import javafx.stage.Stage
-import javafx.stage.Window
+import javafx.scene.web.WebView
+import javafx.stage.*
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -30,7 +28,6 @@ internal fun Button.closeStageOnClickAction(): () -> Unit = {
         else throw IllegalStateException()
     }
 }
-
 
 internal fun Window.showDirectoryChooser(titleString: String, initalPath: Path = Paths.get(".")): Path? =
     DirectoryChooser().apply {
@@ -66,8 +63,25 @@ internal fun Label.addDefaultTooltip() {
     }
 }
 
-val UNCAUGHT_EXCEPTION_HANDLER = Thread.UncaughtExceptionHandler { thread, t ->
+val UNCAUGHT_EXCEPTION_HANDLER = Thread.UncaughtExceptionHandler { _, t ->
     System.err.println("Unexpected exception!")
     t.printStackTrace()
     JavaFxUtils.showError(t)
 }
+
+internal fun Window.showWebView(title: String, html: String) =
+    also {
+        Stage().apply {
+            this.title = title
+            initOwner(it)
+            initModality(Modality.APPLICATION_MODAL)
+            WebView().also { webView ->
+                webView.engine.loadContent(html)
+
+                Scene(webView, 500.0, 300.0).also {
+                    scene = it
+                }
+            }
+        }.showAndWait()
+
+    }

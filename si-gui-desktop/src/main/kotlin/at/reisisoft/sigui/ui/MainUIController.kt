@@ -10,6 +10,7 @@ import at.reisisoft.sigui.download.DownloadFinishedEvent
 import at.reisisoft.sigui.download.DownloadManager
 import at.reisisoft.sigui.download.DownloadProgressListener
 import at.reisisoft.sigui.hostspecific.SHORTCUT_CREATOR
+import at.reisisoft.sigui.legal.Legal
 import at.reisisoft.sigui.settings.SiGuiSetting
 import at.reisisoft.sigui.settings.asMutableMap
 import at.reisisoft.ui.*
@@ -71,8 +72,6 @@ class MainUIController : Initializable, AutoCloseable {
     private lateinit var startdlButton: Button
     @FXML
     private lateinit var rootPane: Pane
-    @FXML
-    private lateinit var centerLayout: Pane
 
     private lateinit var settings: SiGuiSetting
 
@@ -90,7 +89,7 @@ class MainUIController : Initializable, AutoCloseable {
         }
     }
 
-    fun updateListOfDownloadVersions(actionEvent: ActionEvent) {
+    fun updateListOfDownloadVersions(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
         if (indicatorUpdateVersions.isVisible)
             return
         println("Update version clicked!")
@@ -179,9 +178,9 @@ class MainUIController : Initializable, AutoCloseable {
 
     private fun initDownloadList() {
         arrayOf(
-            DownloadLocation.STABLE to ResourceBundleUtils.DOWNLOADLIST_NAMED,
-            DownloadLocation.DAILY to ResourceBundleUtils.DOWNLOADLIST_DAILY,
-            DownloadLocation.ARCHIVE to ResourceBundleUtils.DOWNLOADLIST_ARCHIVE
+            DownloadLocation.STABLE to ResourceKey.DOWNLOADLIST_NAMED,
+            DownloadLocation.DAILY to ResourceKey.DOWNLOADLIST_DAILY,
+            DownloadLocation.ARCHIVE to ResourceKey.DOWNLOADLIST_ARCHIVE
         ).forEach { (dlLocation, key) ->
             languageSupport.doLocalized(key) { localizedName ->
                 downloadAccordion.panes.apply {
@@ -199,13 +198,13 @@ class MainUIController : Initializable, AutoCloseable {
                                     var betterToString: String = data?.let {
                                         when {
                                             it.displayName == "FRESH" -> languageSupport.getString(
-                                                ResourceBundleUtils.DOWNLOADLIST_FRESH
+                                                ResourceKey.DOWNLOADLIST_FRESH
                                             )
                                             it.displayName == "STABLE" -> languageSupport.getString(
-                                                ResourceBundleUtils.DOWNLOADLIST_STABLE
+                                                ResourceKey.DOWNLOADLIST_STABLE
                                             )
                                             it.displayName.startsWith("TESTING") -> languageSupport.getReplacedString(
-                                                ResourceBundleUtils.DOWNLOADLIST_TESTING,
+                                                ResourceKey.DOWNLOADLIST_TESTING,
                                                 it.displayName.let {
                                                     it.lastIndexOf(' ').let { offset ->
                                                         it.substring(offset + 1)
@@ -275,7 +274,6 @@ class MainUIController : Initializable, AutoCloseable {
      */
     private fun internalInitialize() {
         rootPane.preferWindowSize()
-        centerLayout.prefWidthProperty().bind(rootPane.widthProperty())
 
         initMenu()
         initDownloadList()
@@ -300,7 +298,7 @@ class MainUIController : Initializable, AutoCloseable {
             executorService.shutdownNow()
     }
 
-    fun openOptionMenu(actionEvent: ActionEvent) {
+    fun openOptionMenu(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
         println("Open Options menu")
         JavaFxUtils.loadFXML("optionUI.fxml").let { loader ->
             loader.resources = languageSupport
@@ -310,7 +308,7 @@ class MainUIController : Initializable, AutoCloseable {
                     optionController.internalInitialize(settings, executorService)
                     Stage().apply {
                         //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
-                        title = languageSupport.getString(ResourceBundleUtils.OPTIONS_TITLE)
+                        title = languageSupport.getString(ResourceKey.OPTIONS_TITLE)
                         scene = Scene(parent)
                     }.showAndWait()
                     optionController.updateSettings()
@@ -324,7 +322,7 @@ class MainUIController : Initializable, AutoCloseable {
     }
 
     private var downloadWindowsOpenTaskStarted = false
-    fun openDownloadMenu(actionEvent: ActionEvent) {
+    fun openDownloadMenu(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
         if (!downloadWindowsOpenTaskStarted) {
             downloadWindowsOpenTaskStarted = true
             executorService.submit {
@@ -352,7 +350,7 @@ class MainUIController : Initializable, AutoCloseable {
                                     )
                                     Stage().apply {
                                         title =
-                                                languageSupport.getString(ResourceBundleUtils.DOWNLOADER_TITLE)
+                                                languageSupport.getString(ResourceKey.DOWNLOADER_TITLE)
                                         scene = Scene(parent)
                                     }.showAndWait()
 
@@ -416,7 +414,7 @@ class MainUIController : Initializable, AutoCloseable {
                 override fun onError(e: Exception) = when (e) {
                     is FileAlreadyExistsException -> showWarning(
                         languageSupport.getReplacedString(
-                            ResourceBundleUtils.ERROR_FILEEXISRS,
+                            ResourceKey.ERROR_FILEEXISRS,
                             e.file
                         )
                     )
@@ -504,7 +502,7 @@ class MainUIController : Initializable, AutoCloseable {
                 settings = settings.copy(installName = newValue)
         }
 
-        val extensionFilter = languageSupport.getReplacedString(ResourceBundleUtils.CHOOSE_LIBREOFFICE).let {
+        val extensionFilter = languageSupport.getReplacedString(ResourceKey.CHOOSE_LIBREOFFICE).let {
             FileChooser.ExtensionFilter(it, *OSUtils.CURRENT_OS.getFileExtensions())
         }
         arrayOf(
@@ -522,7 +520,7 @@ class MainUIController : Initializable, AutoCloseable {
                     null
                 } ?: kotlin.run { settings.downloadFolder }.let {
                     button.scene.window.showFileChooser(
-                        languageSupport.getString(ResourceBundleUtils.OPTIONS_OPENFILE),
+                        languageSupport.getString(ResourceKey.OPTIONS_OPENFILE),
                         it,
                         extensionFilter
                     )?.let {
@@ -543,7 +541,7 @@ class MainUIController : Initializable, AutoCloseable {
 
     }
 
-    fun openManager(actionEvent: ActionEvent) {
+    fun openManager(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
         println("Open manager")
         JavaFxUtils.loadFXML("managerUI.fxml").let { loader ->
             loader.resources = languageSupport
@@ -551,7 +549,7 @@ class MainUIController : Initializable, AutoCloseable {
             loader.getController<ManagerUiController>()!!.let controller@{ controller ->
                 controller.internalInitialize(settings, executorService)
                 Stage().apply {
-                    title = languageSupport.getString(ResourceBundleUtils.MENU_MANAGER)
+                    title = languageSupport.getString(ResourceKey.MENU_MANAGER)
                     scene = Scene(parent)
                 }.showAndWait()
                 return@controller controller.settings
@@ -566,7 +564,7 @@ class MainUIController : Initializable, AutoCloseable {
     //Menu
     private fun initMenu() {}
 
-    fun performParallelInstallation(actionEvent: ActionEvent) = executorService.submit {
+    fun performParallelInstallation(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) = executorService.submit {
         mutableListOf<String>().apply {
             installMainText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
             installHelpText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
@@ -589,11 +587,18 @@ class MainUIController : Initializable, AutoCloseable {
                             putIfAbsent(installName, it)
                         })
                         showAlert(
-                            languageSupport.getString(ResourceBundleUtils.INSTALL_SUCCESS),
+                            languageSupport.getString(ResourceKey.INSTALL_SUCCESS),
                             Alert.AlertType.INFORMATION
                         )
                     }
             }
         }
+    }
+
+    fun openLicense(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
+        rootPane.scene.window.showWebView(
+            languageSupport.getString(ResourceKey.MENU_LICENSE),
+            Legal.getLicenseHTML(languageSupport)
+        )
     }
 }

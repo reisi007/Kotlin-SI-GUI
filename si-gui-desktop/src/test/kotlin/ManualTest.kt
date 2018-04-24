@@ -1,7 +1,7 @@
 import at.reisisoft.sigui.settings.SETTINGS_PATH
 import at.reisisoft.sigui.settings.loadSettings
 import at.reisisoft.sigui.settings.storeSettings
-import at.reisisoft.sigui.ui.ResourceBundleUtils
+import at.reisisoft.sigui.ui.getSupportedLanguages
 import java.nio.file.Files
 import kotlin.test.Test
 
@@ -21,7 +21,7 @@ class ManualTest {
     }
 
     @Test
-    fun availableUiLanguages() = ResourceBundleUtils.getSupportedLanguages().let {
+    fun availableUiLanguages() = getSupportedLanguages().let {
         println("Found UI languages")
         println()
         it.forEach(::println)

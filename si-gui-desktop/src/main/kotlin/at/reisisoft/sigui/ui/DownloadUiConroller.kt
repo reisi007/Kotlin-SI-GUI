@@ -70,16 +70,16 @@ class DownloadUiConroller : Initializable {
             abort.closeStageOnClickAction()()
         }
         //Build main UI
-        languageSupport.doLocalizedReplace(ResourceBundleUtils.DOWNLAODER_DOWNLOAD_FROM, baseUrl) { finalString ->
+        languageSupport.doLocalizedReplace(ResourceKey.DOWNLAODER_DOWNLOAD_FROM, baseUrl) { finalString ->
             urlLabel.text = finalString
         }
-        languageSupport.doLocalizedReplace(ResourceBundleUtils.DOWNLAODER_DOWNLOAD_TO, downloadPath) { finalString ->
+        languageSupport.doLocalizedReplace(ResourceKey.DOWNLAODER_DOWNLOAD_TO, downloadPath) { finalString ->
             pathLabel.text = finalString
         }
         urlLabel.addDefaultTooltip()
         pathLabel.addDefaultTooltip()
 
-        val cancel = languageSupport.getString(ResourceBundleUtils.CANCEL)
+        val cancel = languageSupport.getString(ResourceKey.CANCEL)
         downloads.forEach { type, fileName ->
             HBox().apply {
                 spacing = 10.0

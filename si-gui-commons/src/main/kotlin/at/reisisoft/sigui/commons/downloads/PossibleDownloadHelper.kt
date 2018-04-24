@@ -366,7 +366,7 @@ object PossibleDownloadHelper {
     }
 
     private fun parseHtmlDocument(urlAsString: String, connectionTimeout: Int = 10000/*10 seconds*/): Document =
-        getJsoupResponse(urlAsString).parse()
+        getJsoupResponse(urlAsString, connectionTimeout).parse()
 
     private fun getJsoupResponse(
         urlAsString: String,

@@ -29,24 +29,19 @@ class OptionUIController : Initializable {
 
     private lateinit var languageSupport: ResourceBundle
 
-
     internal lateinit var settings: SiGuiSetting
         private set
 
     @FXML
     private lateinit var closeButton: Button
-
     @FXML
     private lateinit var optionHolder: FlowPane
-
     @FXML
     private lateinit var downloadTypesSelection: CheckComboBox<DownloadType>
-
     @FXML
     private lateinit var helppackLanguages: ComboBox<Locale>
     @FXML
     private lateinit var updateHelppackLanguages: Button
-
     @FXML
     private lateinit var uiLang: ComboBox<Locale>
     @FXML
@@ -123,7 +118,6 @@ class OptionUIController : Initializable {
                 selectFirst()
         }
 
-
         updateHelppackLanguages.onAction = EventHandler<ActionEvent> {
             println("Refresh helppack languages clicked!")
             executorService.submit {
@@ -146,8 +140,9 @@ class OptionUIController : Initializable {
                 }
             }
         }
+
         //Setup UI language
-        ResourceBundleUtils.getSupportedLanguages().let {
+        getSupportedLanguages().let {
             uiLang.items.addAll(it)
             val selectLanguage = if (it.contains(settings.uiLanguage))
                 settings.uiLanguage
@@ -158,7 +153,7 @@ class OptionUIController : Initializable {
         //Setup download location
         downloadFolderButton.onAction = EventHandler {
             downloadFolderButton.scene.window.showDirectoryChooser(
-                languageSupport.getString(ResourceBundleUtils.OPTIONS_OPENFOLDER),
+                languageSupport.getString(ResourceKey.OPTIONS_OPENFOLDER),
                 Paths.get(downloadFolderText.text)
             )?.let { path ->
                 downloadFolderText.text = path.toString()
@@ -166,13 +161,12 @@ class OptionUIController : Initializable {
         }
 
         downloadFolderText.text = settings.downloadFolder.toString()
-        downloadFolderLabel.text = languageSupport.getString(ResourceBundleUtils.OPTIONS_DOWNLOADFOLDER)
-
+        downloadFolderLabel.text = languageSupport.getString(ResourceKey.OPTIONS_DOWNLOADFOLDER)
 
         //Setup installation folder
         installFolderButton.onAction = EventHandler {
             installFolderButton.scene.window.showDirectoryChooser(
-                languageSupport.getString(ResourceBundleUtils.OPTIONS_OPENFOLDER),
+                languageSupport.getString(ResourceKey.OPTIONS_OPENFOLDER),
                 Paths.get(installFolderText.text)
             )?.let { path ->
                 installFolderText.text = path.toString()
@@ -180,24 +174,11 @@ class OptionUIController : Initializable {
         }
 
         installFolderText.text = settings.rootInstallationFolder.toString()
-        installFolderLabel.text = languageSupport.getString(ResourceBundleUtils.OPTIONS_ROOTINSTALLFOLDER)
-
-        //Elements, whose width should be restricted to 40% of available width
-        arrayOf(
-            installFolderLabel,
-            installFolderText,
-            downloadFolderLabel,
-            downloadFolderText,
-            shortcutCreationLabel,
-            shortcutCreationText
-        ).forEach {
-            it.prefWidthProperty().bind(rootLayout.widthProperty() * 0.35)
-        }
+        installFolderLabel.text = languageSupport.getString(ResourceKey.OPTIONS_ROOTINSTALLFOLDER)
 
         //Sortcut creation
         shortcutCreationEnabled.isSelected = settings.createDesktopShortCut
         shortcutCreationText.text = settings.shortcutDir.toString()
-
     }
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
