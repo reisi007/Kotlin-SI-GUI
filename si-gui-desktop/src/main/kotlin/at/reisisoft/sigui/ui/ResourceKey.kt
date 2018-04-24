@@ -1,6 +1,8 @@
 package at.reisisoft.sigui.ui
 
 import at.reisisoft.sigui.commons.downloads.newLocaleTreeSet
+import com.sun.nio.zipfs.JarFileSystemProvider
+import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -59,15 +61,32 @@ internal enum class ResourceKey(private val resourceBundleKey: String) {
 
 internal fun getSupportedLanguages(): Set<Locale> =
     newLocaleTreeSet().apply { add(Locale.forLanguageTag(EN_US)) }.apply {
-        ResourceKey::class.java.classLoader.getResource("uistrings/sigui-desktop.properties").let {
-            Paths.get(it.toURI())
-        }.let {
-            it.parent.let { uiResourcePath ->
-                Files.list(uiResourcePath).skip(1).map {
-                    it.fileName.toString().let {
-                        it.substring(it.indexOf('_') + 1, it.lastIndexOf('.'))
+        ResourceKey::class.java.classLoader.getResource("uistrings/sigui-desktop.properties").toURI().let {
+            JarFileSystemProvider().let { fsp ->
+                var fileSytemToCLose: FileSystem? = null
+                try {
+                    try {
+                        //If in JAR
+                        fsp.newFileSystem(it, emptyMap<String, Any?>()).let {
+                            fileSytemToCLose = it
+                            it.getPath("uistrings", "sigui-desktop.properties")
+                        }
+                    } catch (e: Exception) {
+                        //Otherwise
+                        Paths.get(it)
+                    }.let {
+                        it.parent.let { uiResourcePath ->
+                            Files.list(uiResourcePath)
+                                .map { it.fileName.toString() }
+                                .filter { it.contains('_') }
+                                .map { it.substring(it.indexOf('_') + 1, it.lastIndexOf('.')) }
+                                .map { Locale.forLanguageTag(it) }
+                                .forEach { add(it) }
+                        }
                     }
-                }.map { Locale.forLanguageTag(it) }.forEach { add(it) }
+                } finally {
+                    fileSytemToCLose?.close()
+                }
             }
         }
     }

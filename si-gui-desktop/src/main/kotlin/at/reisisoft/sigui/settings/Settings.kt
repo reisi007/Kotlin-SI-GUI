@@ -4,7 +4,6 @@ import at.reisisoft.sigui.OSUtils
 import at.reisisoft.sigui.commons.downloads.DownloadInformation
 import at.reisisoft.sigui.commons.downloads.DownloadLocation
 import at.reisisoft.sigui.commons.downloads.DownloadType
-import at.reisisoft.withChild
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import java.lang.reflect.Type
@@ -65,12 +64,12 @@ internal fun <K, V> Map<K, V>.asMutableMap(): MutableMap<K, V> = if (this is Mut
 internal fun storeSettings(settings: SiGuiSetting): Unit = Files.newBufferedWriter(
     SETTINGS_PATH, DEFAULT_CHARSET, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
 ).use {
-    println("Storing settings to $SETTINGS_PATH")
+    println("Storing settings")
     JSON.toJson(settings, it)
 }
 
 internal fun loadSettings(): SiGuiSetting {
-    println("Loading setings from: $SETTINGS_PATH")
+    println("Loading setings")
     if (!Files.exists(SETTINGS_PATH))
         return SiGuiSetting()
     else
@@ -80,7 +79,9 @@ internal fun loadSettings(): SiGuiSetting {
 }
 
 internal val SETTINGS_PATH by lazy {
-    Paths.get(SiGuiSetting::class.java.classLoader.getResource(".").toURI()) withChild "si-gui.settings.json"
+    Paths.get(".", "si-gui.settings.json").also {
+        println("Settings path: ${it.toAbsolutePath().normalize()}")
+    }
 }
 
 private val JSON by lazy(GsonBuilder().registerTypeHierarchyAdapter(Path::class.java,
