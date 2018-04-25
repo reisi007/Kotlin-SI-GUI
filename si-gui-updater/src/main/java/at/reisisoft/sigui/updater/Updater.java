@@ -122,10 +122,17 @@ public class Updater {
 
     public static void startSiGui() throws Exception {
         boolean isWindows = System.getProperty("os.name").toLowerCase().contains("wind");
-        Path scriptFolder = Files.list(siGuiInstallFolder).findFirst().get().resolve("bin");
+        final Path scriptFolderPath = siGuiInstallFolder.resolve("si-gui-desktop").resolve("bin");
         if (isWindows)
-            new ProcessBuilder("cmd.exe", "/c", "si-gui-desktop.bat").directory(scriptFolder.toFile()).inheritIO().start();
-        else
-            new ProcessBuilder("./si-gui-desktop").directory(scriptFolder.toFile()).inheritIO().start();
+            new ProcessBuilder("cmd.exe", "/c", "si-gui-desktop.bat").directory(scriptFolderPath.toFile()).inheritIO().start();
+        else {
+            String filename = "si-gui-desktop";
+            File scriptFolder = scriptFolderPath.toFile();
+            File fileToExecute = new File(scriptFolder, filename);
+            boolean result = fileToExecute.setExecutable(true, false);
+            if (!result)
+                throw new IllegalStateException("Could not set ececute permission!");
+            new ProcessBuilder("sh", "./" + filename).directory(scriptFolder).inheritIO().start();
+        }
     }
 }
