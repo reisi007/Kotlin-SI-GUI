@@ -33,7 +33,6 @@ object PossibleDownloadHelper {
                         )
                         DownloadLocation.ARCHIVE -> downloadLocation to possibleArchive(it)
                         DownloadLocation.TESTING -> DownloadLocation.STABLE to possibleTestingVersion(it)
-                        else -> throw IllegalStateException("Unexpected location $downloadLocation")
                     }
                 }.toMap()
         }
