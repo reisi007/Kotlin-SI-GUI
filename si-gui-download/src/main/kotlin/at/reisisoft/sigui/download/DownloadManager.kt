@@ -101,7 +101,7 @@ internal class DownloadManagerImpl<T>(private val executorService: ExecutorServi
 
     override fun cancelAllDownloads() {
         downloadCancelInProgress = true
-        activeDownloads.stream().filter { !it.isDone }.forEach { it.cancel(true) }
+        activeDownloads.asSequence().filter { !it.isDone }.forEach { it.cancel(true) }
         activeDownloads.clear()
     }
 
