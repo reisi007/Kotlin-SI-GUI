@@ -1,16 +1,16 @@
 group 'at.reisisoft'
 version '0.1-SNAPSHOT'
 
-
-
 buildscript {
     ext.kotlin_version = '1.+'
     ext.curTime = new Date().format('yyyy.MM.dd-HHmm')
     repositories {
         mavenCentral()
+        google()
+        jcenter()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:3.1.2'
     }
 }
-

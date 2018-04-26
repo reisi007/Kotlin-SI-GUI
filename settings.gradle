@@ -3,8 +3,10 @@ rootProject.name = 'si-gui'
 include 'si-gui-commons'
 include 'si-gui-desktop'
 include 'si-gui-download'
+include 'si-gui-android'
 include 'kotlin-si-gui-updater'
 
+project(':si-gui-android').projectDir = file('si-gui-android')
 project(':si-gui-commons').projectDir = file('si-gui-commons')
 project(':si-gui-desktop').projectDir = file('si-gui-desktop')
 project(':si-gui-download').projectDir = file('si-gui-download')
