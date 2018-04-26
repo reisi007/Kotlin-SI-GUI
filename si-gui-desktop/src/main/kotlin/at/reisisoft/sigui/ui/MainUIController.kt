@@ -32,6 +32,7 @@ import javafx.stage.Stage
 import javafx.util.StringConverter
 import java.net.URL
 import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -87,6 +88,18 @@ class MainUIController : Initializable, AutoCloseable {
             }
 
         }
+    }
+
+    /**
+     * This is called when [setSettings] is called for the first time
+     */
+    private fun internalInitialize() {
+        rootPane.preferWindowSize()
+
+        initMenu()
+        initDownloadList()
+        initDownloads()
+        initInstallation()
     }
 
     fun updateListOfDownloadVersions(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
@@ -267,18 +280,6 @@ class MainUIController : Initializable, AutoCloseable {
         cancelDownloads.prefWidthProperty().bind(installationRootPane.widthProperty())
         //Init downloadbutton
         startdlButton.prefWidthProperty().bind(downloadAccordion.widthProperty())
-    }
-
-    /**
-     * This is called when [setSettings] is called for the first time
-     */
-    private fun internalInitialize() {
-        rootPane.preferWindowSize()
-
-        initMenu()
-        initDownloadList()
-        initDownloads()
-        initInstallation()
     }
 
     private val executorServiceDelegate = lazy {
@@ -469,6 +470,27 @@ class MainUIController : Initializable, AutoCloseable {
     private lateinit var installfolderTextfield: TextField
 
     private fun initInstallation() {
+        arrayOf(
+            runMain to installMainText
+            , runHelp to installHelpText,
+            runSdk to installSdkText
+        ).forEach { (runButton, label) ->
+            label.textProperty().addListener { _, _, newValue: String? ->
+                val showRunButton = newValue != null && newValue.endsWith("exe", true)
+                runButton.isVisible = showRunButton
+
+            }
+            runButton.onAction = EventHandler {
+                Paths.get(label.text).let {
+                    if (Files.exists(it) && Files.isRegularFile(it)) {
+                        ProcessBuilder().apply {
+                            command(it.toString())
+                        }.start()
+                    }
+                }
+            }
+        }
+
         arrayOf<Pair<Label, (Path) -> SiGuiSetting>>(
             installMainText to { p ->
                 settings.copy(installFileMain = p)
@@ -541,7 +563,6 @@ class MainUIController : Initializable, AutoCloseable {
                 label.text = ""
             }
         }
-
     }
 
     fun openManager(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
