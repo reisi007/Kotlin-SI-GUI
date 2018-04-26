@@ -4,6 +4,7 @@ import at.reisisoft.sigui.OSUtils
 import at.reisisoft.sigui.commons.installation.ShortcutCreator
 import at.reisisoft.withChild
 import net.jimmc.jshortcut.JShellLink
+import java.nio.file.Files
 import java.nio.file.Path
 
 internal val SHORTCUT_CREATOR by lazy<ShortcutCreator> {
@@ -13,6 +14,26 @@ internal val SHORTCUT_CREATOR by lazy<ShortcutCreator> {
                 path = targetFile.toString()
             }.save()
             shortcutRootFolder withChild "$name.lnk"
+        }
+        OSUtils.OS.LINUX -> { targetFile: Path, shortcutRootFolder: Path, name: String ->
+            (shortcutRootFolder withChild "LibreOffice $name.desktop").apply {
+                Files.newBufferedWriter(this).use {
+                    it.write(
+                        """
+                            [Desktop Entry]
+                            Version=1.0
+                            Type=Application
+                            Name=LibreOffice $name
+                            Terminal=false
+                            NoDisplay=false
+                            StartupNotify=false
+                            Icon=libreoffice-startcenter
+                            Exec=${targetFile.fileName}
+                            Path=${targetFile.parent}
+                    """.trimIndent()
+                    )
+                }
+            }
         }
         else -> throw IllegalStateException("Creating shortcuts is not supported for ${OSUtils.CURRENT_OS}")
     }
