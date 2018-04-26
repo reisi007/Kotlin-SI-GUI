@@ -1,7 +1,6 @@
 package at.reisisoft.sigui.ui
 
 import at.reisisoft.sigui.settings.SiGuiSetting
-import at.reisisoft.stream
 import at.reisisoft.ui.*
 import at.reisisoft.ui.JavaFxUtils.showAlert
 import at.reisisoft.ui.JavaFxUtils.showError
@@ -20,8 +19,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ExecutorService
-import java.util.stream.Collectors
 import kotlin.collections.ArrayList
+import kotlin.streams.asSequence
 
 class ManagerUiController : Initializable {
 
@@ -73,10 +72,10 @@ class ManagerUiController : Initializable {
                 executorService.submit {
                     //Safe delete all files
                     try {
-                        items.stream().flatMap { it.value.stream() }.filter { Files.exists(it) }
+                        items.asSequence().flatMap { it.value.asSequence() }.filter { Files.exists(it) }
                             .flatMap {
-                                Files.walk(it)
-                            }.sorted(Comparator.reverseOrder())
+                                Files.walk(it).asSequence()
+                            }.sortedWith(Comparator.reverseOrder())
                             .map {
                                 try {
                                     Files.delete(it)
@@ -86,7 +85,7 @@ class ManagerUiController : Initializable {
                                     it
                                 }
                             }.filter(Objects::nonNull).map { it!!.toString() }
-                            .collect(Collectors.joining(System.lineSeparator())).let {
+                            .joinToString(System.lineSeparator()) { it }.let {
                                 if (it.isBlank())
                                     showAlert(
                                         languageSupport.getString(ResourceKey.INSTALL_SUCCESS),

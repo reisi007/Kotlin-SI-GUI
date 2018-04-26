@@ -39,7 +39,6 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import kotlin.collections.ArrayList
-import kotlin.streams.asSequence
 
 class MainUIController : Initializable, AutoCloseable {
 
@@ -252,13 +251,13 @@ class MainUIController : Initializable, AutoCloseable {
                             it.prefWidthProperty().bind(downloadAccordion.widthProperty())
                             it.converter = converter
 
-                            it.selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                                downloadInformation.find(it).let { (location, _, _) ->
-                                    updateSelection(location, newValue)
+                            it.selectionModel.selectedItemProperty()
+                                .addListener { _, _, newValue: DownloadInformation? ->
+                                    downloadInformation.find(it).let { (location, _, _) ->
+                                        updateSelection(location, newValue)
+                                    }
                                 }
-                            }
                         }
-
                     }
                 }
             }
@@ -431,7 +430,7 @@ class MainUIController : Initializable, AutoCloseable {
     private val downloadManager: DownloadManager<LibreOfficeDownloadFileType> by downloadManagerDelegate
 
 
-    private fun updateSelection(location: DownloadLocation, information: DownloadInformation) {
+    private fun updateSelection(location: DownloadLocation, information: DownloadInformation?) {
         settings = settings.copy(downloadSelection = location to information)
     }
 
@@ -596,7 +595,7 @@ class MainUIController : Initializable, AutoCloseable {
                 installSdkText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
             }.let {
                 settings.installName.let { installName ->
-                    OSUtils.CURRENT_OS.downloadTypesForOS().stream().filter { it != DownloadType.WINDOWSEXE }
+                    OSUtils.CURRENT_OS.downloadTypesForOS().asSequence().filter { it != DownloadType.WINDOWSEXE }
                         .asSequence()
                         .first().let { os ->
                             ParallelInstallation.performInstallationFor(

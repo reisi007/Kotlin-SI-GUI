@@ -1,16 +1,13 @@
 package at.reisisoft.sigui.commons.downloads
 
-import at.reisisoft.*
+import at.reisisoft.comparing
 import org.jsoup.Connection
 import org.jsoup.HttpStatusException
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.SocketTimeoutException
 import java.util.*
-import java.util.function.*
-import java.util.function.Function
-import java.util.stream.Collector
-import java.util.stream.Collectors
+import java.util.function.Predicate
 import kotlin.Comparator
 import kotlin.collections.ArrayList
 
@@ -19,15 +16,14 @@ object PossibleDownloadHelper {
     private val ALL_DOWNLOAD_LOCATIONS by lazy { DownloadLocation.values() }
 
     fun fetchPossibleFor(downloadTypes: List<DownloadType>): Map<DownloadLocation, Set<DownloadInformation>> =
-        fetchPossibleFor(ALL_DOWNLOAD_LOCATIONS, downloadTypes, true)
+        fetchPossibleFor(ALL_DOWNLOAD_LOCATIONS, downloadTypes)
 
     private fun fetchPossibleFor(
         downloadLocations: Array<DownloadLocation>,
-        downloadTypes: List<DownloadType>,
-        executeInParallel: Boolean = false
+        downloadTypes: List<DownloadType>
     ): Map<DownloadLocation, Set<DownloadInformation>> =
         TreeSet(downloadTypes).let {
-            downloadLocations.stream().apply { if (executeInParallel) parallel() }
+            downloadLocations.asSequence()
                 .map { downloadLocation ->
                     when (downloadLocation) {
                         DownloadLocation.DAILY -> downloadLocation to possibleDailyDownloads(it)
@@ -81,7 +77,7 @@ object PossibleDownloadHelper {
                                                 DownloadType.LINUX_RPM_64,
                                                 DownloadType.LINUX_RPM_32,
                                                 DownloadType.MAC
-                                            ).stream().filter(downloadTypes::contains).forEach { dt -> it.add(dt) }
+                                            ).asSequence().filter(downloadTypes::contains).forEach { dt -> it.add(dt) }
 
                                         })
                                 )
@@ -111,8 +107,8 @@ object PossibleDownloadHelper {
         folderContainsString: String,
         baseUrlDocument: Document
     ): SortedSet<DownloadInformation> = baseUrlDocument.select("a[href~=$folderContainsString]").let {
-        it.stream().flatMap {
-            setOf(DownloadType.ANDROID_LIBREOFFICE_X86, DownloadType.ANDROID_LIBREOFFICE_ARM).stream().map { dlType ->
+        it.asSequence().flatMap {
+            sequenceOf(DownloadType.ANDROID_LIBREOFFICE_X86, DownloadType.ANDROID_LIBREOFFICE_ARM).map { dlType ->
                 it.attr("href").let {
                     DownloadInformation(
                         "${baseUrlDocument.location()}$it",
@@ -126,14 +122,14 @@ object PossibleDownloadHelper {
 
     private fun possibleTestingVersion(downloadTypes: Set<DownloadType>): SortedSet<DownloadInformation> =
         parseHtmlDocument(DownloadUrls.TESTING).let { rootDoocument ->
-            rootDoocument.select("table a[href~=\\.]").stream()
+            rootDoocument.select("table a[href~=\\.]").asSequence()
                 .map { it.attr("href") }.filter { it.endsWith('/') }
                 .flatMap { urlFragment ->
                     getCorrectBaseUrlForOS(
                         "${rootDoocument.location()}$urlFragment",
                         "TESTING ${urlFragment.let { it.substring(0, it.length - 1) }}",
                         TreeSet(downloadTypes).apply { remove(DownloadType.WINDOWSEXE) }
-                    ).stream()
+                    ).asSequence()
                 }.toSortedSet()
         }
 
@@ -143,7 +139,7 @@ object PossibleDownloadHelper {
         releases: Collection<ReleaseType>,
         downloadTypes: Set<DownloadType>
     ): SortedSet<DownloadInformation> = parseHtmlDocument(DownloadUrls.STABLE).let { rootDocument ->
-        releases.stream().flatMap { release ->
+        releases.asSequence().flatMap { release ->
             //Maximum is what we want. Not the quickest solution, but we have < 10 [most likely 2-4] entries
             val versionComperator: Comparator<String> =
                 if (release == ReleaseType.FRESH)
@@ -165,17 +161,16 @@ object PossibleDownloadHelper {
                     }
                 }
 
-            rootDocument.select("table a[href~=\\.]").stream()
+            rootDocument.select("table a[href~=\\.]").asSequence()
                 .map { it.attr("href") }
                 .filter { !it.startsWith('/') && it.endsWith('/') }
-                .max(versionComperator)
-                .orElseThrow { throw IllegalStateException("Unable to find $release!") }.let { urlFragment ->
+                .maxWith(versionComperator)?.let { urlFragment ->
                     getCorrectBaseUrlForOS(
                         "${rootDocument.location()}$urlFragment",
                         release.toString(),
                         TreeSet(downloadTypes).apply { remove(DownloadType.WINDOWSEXE) }
-                    ).stream()
-                }
+                    ).asSequence()
+                } ?: emptySequence()
         }.toSortedSet()
     }
 
@@ -186,7 +181,7 @@ object PossibleDownloadHelper {
         baseUrlWithoutOS: String,
         displayName: String,
         downloadTypes: Collection<DownloadType>
-    ): SortedSet<DownloadInformation> = downloadTypes.stream().map {
+    ): SortedSet<DownloadInformation> = downloadTypes.asSequence().map {
         setOf(it) to when (it) {
             DownloadType.LINUX_DEB_64 -> "deb/$bit64/"
             DownloadType.LINUX_RPM_64 -> "rpm/$bit64/"
@@ -198,7 +193,7 @@ object PossibleDownloadHelper {
             else -> ""
         }
     }.flatMap { (downloadTypes, urlFragment) ->
-        downloadTypes.stream()
+        downloadTypes.asSequence()
             .map { downloadType ->
                 DownloadInformation("$baseUrlWithoutOS$urlFragment", displayName, downloadType)
             }
@@ -208,16 +203,16 @@ object PossibleDownloadHelper {
         parseHtmlDocument(DownloadUrls.DAILY).let { rootDocument ->
             rootDocument.select("a[href]").let { aElements ->
                 Regex("(master|libreoffice.*?)/").let { firstLevelRegex ->
-                    aElements.stream().parallel().map { it.attr("href") }.filter { firstLevelRegex.matches(it) }
+                    aElements.asSequence().map { it.attr("href") }.filter { firstLevelRegex.matches(it) }
                         .map { branchName ->
                             val level2URL = "${rootDocument.location()}$branchName"
                             branchName to parseHtmlDocument(level2URL)
-                        }.checkpoint(false)
+                        }.toList().asSequence()
                         .flatMap { (branchName, level2Document) ->
                             //Build new URL
                             level2Document.select("a[href~=@]").let { thinderboxNames ->
-                                thinderboxNames.stream().parallel().map { it.attr("href") }.flatMap { thinderboxName ->
-                                    getDownloadTypesFromThinderboxName(thinderboxName).stream().map {
+                                thinderboxNames.asSequence().map { it.attr("href") }.flatMap { thinderboxName ->
+                                    getDownloadTypesFromThinderboxName(thinderboxName).asSequence().map {
                                         DownloadInformation(
                                             level2Document.location() + thinderboxName + "current/",
                                             "${branchName.substring(
@@ -318,41 +313,15 @@ object PossibleDownloadHelper {
             if (fileTypes.contains(LibreOfficeDownloadFileType.HP) && hpLanguage == ".")
                 throw IllegalStateException("Helppack language is needed!")
             val regexMap: Map<LibreOfficeDownloadFileType, Predicate<String>> =
-                fileTypes.stream()
-                    .map { it to LibreOfficeDownloadFileType.getPredicateFor(it, downloadType, hpLanguage) }
-                    .collect(Collectors.toMap({ it.first }, { it.second }))
+                fileTypes.asSequence()
+                    .map { it to LibreOfficeDownloadFileType.getPredicateFor(it, downloadType, hpLanguage) }.toMap()
             rootDocument.select("a[href]:first-child").map { it.html() }
                 .let { listOfFileNames ->
-                    fileTypes.stream().map { it to listOfFileNames }
+                    fileTypes.asSequence().map { it to listOfFileNames }
                         .flatMap { (key, value) ->
-                            value.stream().map { newValue -> key to newValue }
+                            value.asSequence().map { newValue -> key to newValue }
                         }.filter { (type, testName) -> regexMap.getValue(type).test(testName) }
-                        .collect(object :
-                            Collector<Pair<LibreOfficeDownloadFileType, String>, MutableMap<LibreOfficeDownloadFileType, String>, Map<LibreOfficeDownloadFileType, String>> {
-                            override fun characteristics(): Set<Collector.Characteristics> =
-                                setOf(Collector.Characteristics.UNORDERED)
-
-                            override fun supplier(): Supplier<MutableMap<LibreOfficeDownloadFileType, String>> =
-                                Supplier { EnumMap<LibreOfficeDownloadFileType, String>(LibreOfficeDownloadFileType::class.java) }
-
-                            override fun accumulator(): BiConsumer<MutableMap<LibreOfficeDownloadFileType, String>, Pair<LibreOfficeDownloadFileType, String>> =
-                                BiConsumer { map, (k, v) ->
-                                    map.putIfAbsent(k, v)
-                                }
-
-                            override fun combiner(): BinaryOperator<MutableMap<LibreOfficeDownloadFileType, String>> =
-                                BinaryOperator { thiz, other ->
-                                    other.entries.stream().forEach { (k, v) -> thiz.putIfAbsent(k, v) }
-                                    thiz
-                                }
-
-                            override fun finisher(): Function<MutableMap<LibreOfficeDownloadFileType, String>, Map<LibreOfficeDownloadFileType, String>> =
-                                Function {
-                                    Collections.unmodifiableMap(it)
-                                }
-
-                        }
-                        )
+                        .toMap()
                 }
         }
 
@@ -360,7 +329,7 @@ object PossibleDownloadHelper {
     private val hpRegex by lazy { Regex("help.*?_(?<languageTag>[a-zA-Z]{1,3}(-[a-zA-Z]{1,3})?)") }
 
     fun getHelppackLanguages(): Set<Locale> = newLocaleTreeSet().also { set ->
-        parseHtmlDocument(DownloadUrls.HP_ENDPOINT).select("a[href~=help]").stream().map { it.attr("href") }
+        parseHtmlDocument(DownloadUrls.HP_ENDPOINT).select("a[href~=help]").asSequence().map { it.attr("href") }
             .map { hpRegex.find(it) }.filter(Objects::nonNull).map { it!!.groups["languageTag"]!!.value }
             .map { Locale.forLanguageTag(it) }.forEach { set.add(it) }
     }

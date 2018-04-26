@@ -6,7 +6,7 @@ import at.reisisoft.withChild
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.stream.Stream
+import kotlin.streams.asSequence
 
 object ParallelInstallation {
 
@@ -31,10 +31,10 @@ object ParallelInstallation {
         shortcutCreator: ShortcutCreator?,
         shortcutLocation: Path?
     ): Array<Path> {
-        Stream.of(installLocation).filter { Files.exists(it) }.flatMap(Files::list).skip(1).findAny().ifPresent {
-            //If install location exists, and is a non-empty directory
-            throw IllegalStateException("This folder is not suitable for parallel installation!")
-        }
+        //If install location exists, and is a non-empty directory
+        sequenceOf(installLocation).filter { Files.exists(it) }.flatMap { Files.list(it).asSequence() }.drop(1)
+            .firstOrNull() ?: throw IllegalStateException("This folder is not suitable for parallel installation!")
+
         try {
             filepaths.forEach {
                 it.let { Paths.get(it).let { it.fileName.toString() to it.parent } }
