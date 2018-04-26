@@ -31,7 +31,7 @@ public class MainUI extends Application {
         SiGuiSetting settings = SettingsKt.loadSettings();
         Locale.setDefault(settings.getUiLanguage());
         FXMLLoader loader = JavaFxUtils.loadFXML("mainUI.fxml");
-        ResourceBundle languageSupport = ResourceBundle.getBundle("uistrings.sigui-desktop");
+        ResourceBundle languageSupport = ResourceBundle.getBundle("uistrings.sigui-desktop");//TODO load as UTF-8
         loader.setResources(languageSupport);
         primaryStage.setTitle(languageSupport.getString(ResourceKey.APPNAME.toString()));
         Parent mainUi = loader.load();

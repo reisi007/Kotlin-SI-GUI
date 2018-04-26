@@ -2,9 +2,12 @@ group 'at.reisisoft'
 version '0.1.1' //Do not forget to change on release
 
 apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'at.reisisoft.sigui.updater.Updater'
 
 jar {
     manifest {
-        attributes 'Main-Class': 'at.reisisoft.sigui.updater.Updater'
+        attributes 'Main-Class': mainClassName
     }
 }
