@@ -10,7 +10,7 @@ object NamingUtils {
             return it.value
         }
         regularVersionRegex.find(mainFileName)?.let {
-            it.groups["name"]?.let {
+            it.groups[1]?.let {
                 return it.value
             }
         }

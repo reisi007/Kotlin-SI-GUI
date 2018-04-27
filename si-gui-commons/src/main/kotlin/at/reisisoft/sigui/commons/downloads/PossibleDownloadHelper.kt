@@ -329,7 +329,7 @@ object PossibleDownloadHelper {
 
     fun getHelppackLanguages(): Set<Locale> = newLocaleTreeSet().also { set ->
         parseHtmlDocument(DownloadUrls.HP_ENDPOINT).select("a[href~=help]").asSequence().map { it.attr("href") }
-            .map { hpRegex.find(it) }.filter(Objects::nonNull).map { it!!.groups["languageTag"]!!.value }
+            .map { hpRegex.find(it) }.filter(Objects::nonNull).map { it!!.groups[1]!!.value }
             .map { Locale.forLanguageTag(it) }.forEach { set.add(it) }
     }
 
