@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,16 +28,15 @@ public class MainUI extends Application {
         Optional.ofNullable(ManifestUtils.INSTANCE.loadManifest()).ifPresent(it ->
                 System.out.println("Build timestamp (TMP) " + it.getMainAttributes().getValue("Build-Timestamp"))
         );
-        primaryStage.setResizable(false);
         SiGuiSetting settings = SettingsKt.loadSettings();
         Locale.setDefault(settings.getUiLanguage());
         FXMLLoader loader = JavaFxUtils.loadFXML("mainUI.fxml");
-        ResourceBundle languageSupport = ResourceBundle.getBundle("uistrings.sigui-desktop");//TODO load as UTF-8
+        ResourceBundle languageSupport = JavaFXKt.loadEncodedRessource("uistrings.sigui-desktop", StandardCharsets.UTF_8);
         loader.setResources(languageSupport);
         primaryStage.setTitle(languageSupport.getString(ResourceKey.APPNAME.toString()));
         Parent mainUi = loader.load();
         controller = loader.getController();
-        controller.internalInitialize(settings);
+        controller.internalInitialize(settings, primaryStage);
         primaryStage.setScene(new Scene(mainUi));
         primaryStage.show();
     }

@@ -17,6 +17,8 @@ import at.reisisoft.ui.*
 import at.reisisoft.ui.JavaFxUtils.showAlert
 import at.reisisoft.ui.JavaFxUtils.showError
 import at.reisisoft.withChild
+import javafx.beans.value.ChangeListener
+import javafx.beans.value.ObservableValue
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXML
@@ -49,6 +51,7 @@ class MainUIController : Initializable, AutoCloseable {
     @FXML
     private lateinit var downloadAccordion: Accordion
     private lateinit var languageSupport: ResourceBundle
+    private lateinit var stage: Stage
 
 
     private var downloadInformation: MutableList<Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane>> =
@@ -76,9 +79,10 @@ class MainUIController : Initializable, AutoCloseable {
     private lateinit var settings: SiGuiSetting
 
     @JvmName("internalInitialize")
-    internal fun setSettings(newSettings: SiGuiSetting) {
+    internal fun setSettings(newSettings: SiGuiSetting, stage: Stage) {
         if (!::settings.isInitialized) {
             settings = newSettings
+            this.stage = stage
             try {
                 internalInitialize()
             } catch (t: Throwable) {
@@ -93,6 +97,27 @@ class MainUIController : Initializable, AutoCloseable {
      * This is called when [setSettings] is called for the first time
      */
     private fun internalInitialize() {
+
+        cancelDownloads.prefWidthProperty().apply {
+            var count = 0
+            object : ChangeListener<Number> {
+                override fun changed(observable: ObservableValue<out Number>?, oldValue: Number?, newValue: Number?) {
+                    count++
+                    val newWidth =
+                        cancelDownloads.prefWidth + startInstallButton.prefWidth + /*added spacing*/+3 * 7
+                    println("[$count] New window width is: $newWidth!")
+                    if (count in 3..4) {
+                        stage.minWidth = newWidth
+                        if (count == 4) {
+                            println("Removing listener...")
+                            removeListener(this)
+                        }
+                    }
+                }
+            }.let {
+                addListener(it)
+            }
+        }
         rootPane.preferWindowSize()
 
         initMenu()
@@ -587,41 +612,43 @@ class MainUIController : Initializable, AutoCloseable {
     //Menu
     private fun initMenu() {}
 
-    fun performParallelInstallation(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) = executorService.submit {
-        try {
-            mutableListOf<String>().apply {
-                installMainText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
-                installHelpText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
-                installSdkText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
-            }.let {
-                settings.installName.let { installName ->
-                    OSUtils.CURRENT_OS.downloadTypesForOS().asSequence().filter { it != DownloadType.WINDOWSEXE }
-                        .asSequence()
-                        .first().let { os ->
-                            ParallelInstallation.performInstallationFor(
-                                it,
-                                settings.rootInstallationFolder withChild installName,
-                                os,
-                                SHORTCUT_CREATOR,
-                                settings.shortcutDir
-                            )
-                        }
-                        .also {
-                            settings = settings.copy(managedInstalledVersions =
-                            settings.managedInstalledVersions.asMutableMap().apply {
-                                putIfAbsent(installName, it)
-                            })
-                            showAlert(
-                                languageSupport.getString(ResourceKey.INSTALL_SUCCESS),
-                                Alert.AlertType.INFORMATION
-                            )
-                        }
+    fun performParallelInstallation(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) =
+        executorService.submit {
+            try {
+                mutableListOf<String>().apply {
+                    installMainText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+                    installHelpText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+                    installSdkText.text?.let { if (it.isBlank()) null else it }?.let { add(it) }
+                }.let {
+                    settings.installName.let { installName ->
+                        OSUtils.CURRENT_OS.downloadTypesForOS().asSequence()
+                            .filter { it != DownloadType.WINDOWSEXE }
+                            .asSequence()
+                            .first().let { os ->
+                                ParallelInstallation.performInstallationFor(
+                                    it,
+                                    settings.rootInstallationFolder withChild installName,
+                                    os,
+                                    SHORTCUT_CREATOR,
+                                    settings.shortcutDir
+                                )
+                            }
+                            .also {
+                                settings = settings.copy(managedInstalledVersions =
+                                settings.managedInstalledVersions.asMutableMap().apply {
+                                    putIfAbsent(installName, it)
+                                })
+                                showAlert(
+                                    languageSupport.getString(ResourceKey.INSTALL_SUCCESS),
+                                    Alert.AlertType.INFORMATION
+                                )
+                            }
+                    }
                 }
+            } catch (e: Exception) {
+                showError(e)
             }
-        } catch (e: Exception) {
-            showError(e)
         }
-    }
 
     fun openLicense(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
         rootPane.scene.window.showWebView(

@@ -12,8 +12,12 @@ import javafx.scene.layout.Pane
 import javafx.scene.text.Font
 import javafx.scene.web.WebView
 import javafx.stage.*
+import java.io.InputStreamReader
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 
 fun runOnUiThread(action: () -> Unit): Unit = Platform.runLater(action)
 
@@ -85,3 +89,37 @@ internal fun Window.showWebView(title: String, html: String) =
         }.showAndWait()
 
     }
+
+//Not needed in JDK 10 or above
+fun loadEncodedRessource(
+    resourcebundleName: String,
+    chartset: Charset = StandardCharsets.UTF_8
+): ResourceBundle? = ResourceBundle.getBundle(
+    resourcebundleName,
+    object : ResourceBundle.Control() {
+        override fun newBundle(
+            baseName: String?,
+            locale: Locale?,
+            format: String?,
+            loader: ClassLoader?,
+            reload: Boolean
+        ): ResourceBundle? {
+            // The below is a copy of the default implementation.
+            val bundleName = toBundleName(baseName, locale);
+            val resourceName = toResourceName(bundleName, "properties");
+            return if (reload) {
+                val url = loader?.getResource(resourceName);
+                url?.let {
+                    url.openConnection()?.let {
+                        it.useCaches = false
+                        it.getInputStream();
+                    }
+                }
+            } else {
+                loader?.getResourceAsStream(resourceName);
+            }?.use {
+                // Only this line is changed to make it to read properties files as UTF-8.
+                return PropertyResourceBundle(InputStreamReader(it, chartset));
+            }
+        }
+    })
