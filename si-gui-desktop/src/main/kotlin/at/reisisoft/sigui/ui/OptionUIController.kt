@@ -142,12 +142,14 @@ class OptionUIController : Initializable {
         }
 
         //Setup UI language
-        getSupportedLanguages().let {
-            uiLang.items.addAll(it)
-            val selectLanguage = if (it.contains(settings.uiLanguage))
-                settings.uiLanguage
-            else Locale.forLanguageTag(EN_US)
-            uiLang.selectionModel.select(selectLanguage)
+        getSupportedLanguages().let { supportedLanguages ->
+            (supportedLanguages.asSequence().filter { it == languageSupport.locale }.firstOrNull()
+                    ?: Locale.forLanguageTag(
+                        EN_US
+                    )!!).let {
+                uiLang.items.addAll(supportedLanguages)
+                uiLang.selectionModel.select(it)
+            }
         }
 
         //Setup download location

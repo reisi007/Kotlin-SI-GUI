@@ -24,10 +24,7 @@ public class MainUI extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Thread.currentThread().setUncaughtExceptionHandler(JavaFXKt.getUNCAUGHT_EXCEPTION_HANDLER());
-        //TODO remove from here and integrate in UI
-        Optional.ofNullable(ManifestUtils.INSTANCE.loadManifest()).ifPresent(it ->
-                System.out.println("Build timestamp (TMP) " + it.getMainAttributes().getValue("Build-Timestamp"))
-        );
+
         SiGuiSetting settings = SettingsKt.loadSettings();
         Locale.setDefault(settings.getUiLanguage());
         FXMLLoader loader = JavaFxUtils.loadFXML("mainUI.fxml");
