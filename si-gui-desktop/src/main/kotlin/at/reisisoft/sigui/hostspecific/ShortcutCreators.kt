@@ -1,8 +1,8 @@
 package at.reisisoft.sigui.hostspecific
 
 import at.reisisoft.sigui.OSUtils
+import at.reisisoft.sigui.commons.desktop.installation.withChild
 import at.reisisoft.sigui.commons.installation.ShortcutCreator
-import at.reisisoft.withChild
 import net.jimmc.jshortcut.JShellLink
 import java.nio.file.Files
 import java.nio.file.Path

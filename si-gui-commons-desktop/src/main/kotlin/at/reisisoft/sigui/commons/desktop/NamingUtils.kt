@@ -1,4 +1,4 @@
-package at.reisisoft
+package at.reisisoft.sigui.commons.desktop
 
 object NamingUtils {
 

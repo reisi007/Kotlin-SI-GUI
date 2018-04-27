@@ -1,8 +1,9 @@
 package at.reisisoft.sigui.commons.tests
 
-import at.reisisoft.NamingUtils
+import at.reisisoft.sigui.commons.desktop.NamingUtils
 import kotlin.test.Test
 import kotlin.test.assertEquals
+
 
 class AutomatedTests {
 

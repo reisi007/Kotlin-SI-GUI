@@ -7,7 +7,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.SocketTimeoutException
 import java.util.*
-import java.util.function.Predicate
 import kotlin.Comparator
 import kotlin.collections.ArrayList
 
@@ -25,14 +24,14 @@ object PossibleDownloadHelper {
         TreeSet(downloadTypes).let {
             downloadLocations.asSequence()
                 .map { downloadLocation ->
-                    when (downloadLocation) {
-                        DownloadLocation.DAILY -> downloadLocation to possibleDailyDownloads(it)
-                        DownloadLocation.STABLE -> downloadLocation to possibleReleaseVersion(
+                    downloadLocation to when (downloadLocation) {
+                        DownloadLocation.DAILY -> possibleDailyDownloads(it)
+                        DownloadLocation.STABLE -> possibleReleaseVersion(
                             setOf(ReleaseType.STABLE, ReleaseType.FRESH),
                             it
                         )
-                        DownloadLocation.ARCHIVE -> downloadLocation to possibleArchive(it)
-                        DownloadLocation.TESTING -> DownloadLocation.STABLE to possibleTestingVersion(it)
+                        DownloadLocation.ARCHIVE -> possibleArchive(it)
+                        DownloadLocation.TESTING -> possibleTestingVersion(it)
                     }
                 }.toMap()
         }
@@ -142,7 +141,7 @@ object PossibleDownloadHelper {
             //Maximum is what we want. Not the quickest solution, but we have < 10 [most likely 2-4] entries
             val versionComperator: Comparator<String> =
                 if (release == ReleaseType.FRESH)
-                    Comparator.naturalOrder()
+                    Comparator { a, b -> a.compareTo(b) }
                 else Comparator { thiz, other ->
                     val thizLastIndex = thiz.lastIndexOf('.')
                     val thizIntVal = thiz.substring(0, thizLastIndex)
@@ -311,7 +310,7 @@ object PossibleDownloadHelper {
         parseHtmlDocument(baseUrl, 3000).let { rootDocument ->
             if (fileTypes.contains(LibreOfficeDownloadFileType.HP) && hpLanguage == ".")
                 throw IllegalStateException("Helppack language is needed!")
-            val regexMap: Map<LibreOfficeDownloadFileType, Predicate<String>> =
+            val regexMap: Map<LibreOfficeDownloadFileType, StringPredicate> =
                 fileTypes.asSequence()
                     .map { it to LibreOfficeDownloadFileType.getPredicateFor(it, downloadType, hpLanguage) }.toMap()
             rootDocument.select("a[href]:first-child").map { it.html() }
@@ -319,7 +318,7 @@ object PossibleDownloadHelper {
                     fileTypes.asSequence().map { it to listOfFileNames }
                         .flatMap { (key, value) ->
                             value.asSequence().map { newValue -> key to newValue }
-                        }.filter { (type, testName) -> regexMap.getValue(type).test(testName) }
+                        }.filter { (type, testName) -> regexMap.getValue(type)(testName) }
                         .toMap()
                 }
         }
@@ -329,7 +328,7 @@ object PossibleDownloadHelper {
 
     fun getHelppackLanguages(): Set<Locale> = newLocaleTreeSet().also { set ->
         parseHtmlDocument(DownloadUrls.HP_ENDPOINT).select("a[href~=help]").asSequence().map { it.attr("href") }
-            .map { hpRegex.find(it) }.filter(Objects::nonNull).map { it!!.groups[1]!!.value }
+            .map { hpRegex.find(it) }.filterNotNull().map { it.groups[1]!!.value }
             .map { Locale.forLanguageTag(it) }.forEach { set.add(it) }
     }
 

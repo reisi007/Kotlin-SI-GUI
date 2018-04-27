@@ -1,9 +1,10 @@
 package at.reisisoft.sigui.ui
 
-import at.reisisoft.NamingUtils
 import at.reisisoft.format
 import at.reisisoft.orElse
 import at.reisisoft.sigui.OSUtils
+import at.reisisoft.sigui.commons.desktop.NamingUtils
+import at.reisisoft.sigui.commons.desktop.installation.withChild
 import at.reisisoft.sigui.commons.downloads.*
 import at.reisisoft.sigui.commons.installation.ParallelInstallation
 import at.reisisoft.sigui.download.DownloadFinishedEvent
@@ -16,7 +17,6 @@ import at.reisisoft.sigui.settings.asMutableMap
 import at.reisisoft.ui.*
 import at.reisisoft.ui.JavaFxUtils.showAlert
 import at.reisisoft.ui.JavaFxUtils.showError
-import at.reisisoft.withChild
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.event.ActionEvent
@@ -168,15 +168,15 @@ class MainUIController : Initializable, AutoCloseable {
                 }
 
         //Update data
-        for (location in data.keys) {
-            downloadInformation.find(location).let { (_, it, _) ->
-                runOnUiThread {
-                    it.items.let { items ->
-                        items.clear()
-                        items.addAll(data.getValue(location))
-                    }
+        runOnUiThread {
+            for (location in data.keys)
+                downloadInformation.find(location).let { (_, it, _) ->
+                    it.items.clear()
                 }
-            }
+            for (location in data.keys)
+                downloadInformation.find(location).let { (_, it, _) ->
+                    it.items.addAll(data.getValue(location))
+                }
         }
 
         //Update selection
@@ -202,7 +202,6 @@ class MainUIController : Initializable, AutoCloseable {
                                     it.asyncPersist()
                                     settings = it
                                 }
-
                             }
                     }
                 }

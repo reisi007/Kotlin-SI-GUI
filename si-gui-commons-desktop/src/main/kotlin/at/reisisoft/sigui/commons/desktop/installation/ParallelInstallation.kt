@@ -1,8 +1,8 @@
 package at.reisisoft.sigui.commons.installation
 
-import at.reisisoft.NamingUtils
+import at.reisisoft.sigui.commons.desktop.NamingUtils
+import at.reisisoft.sigui.commons.desktop.installation.withChild
 import at.reisisoft.sigui.commons.downloads.DownloadType
-import at.reisisoft.withChild
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -30,13 +30,13 @@ object ParallelInstallation {
         shortcutCreator: ShortcutCreator?,
         shortcutLocation: Path?
     ): Array<Path> {
-        //If install location exists, and is a non-empty directory
+        //If install location exists, and is LibreOfficeDownloadFileType.kt non-empty directory
         if (Files.exists(installLocation)) {
             if (!Files.isDirectory(installLocation))
-                throw IllegalStateException("Installation folder exists, but is a file!")
+                throw IllegalStateException("Installation folder exists, but is LibreOfficeDownloadFileType.kt file!")
             else
                 Files.list(installLocation).findAny().ifPresent {
-                    throw IllegalStateException("Instaollation folder exists, is a directory, but is not empty!")
+                    throw IllegalStateException("Instaollation folder exists, is LibreOfficeDownloadFileType.kt directory, but is not empty!")
                 }
         }
 
@@ -50,7 +50,7 @@ object ParallelInstallation {
                                     "msiexec",
                                     "/qr",
                                     "/norestart",
-                                    "/a",
+                                    "/LibreOfficeDownloadFileType.kt",
                                     "\"$fileName\"",
                                     "TARGETDIR=\"$installLocation\""
                                 )

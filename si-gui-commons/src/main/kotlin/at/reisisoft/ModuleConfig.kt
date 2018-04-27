@@ -3,9 +3,6 @@ package at.reisisoft;
 import java.nio.file.Path
 import java.util.function.Predicate
 
-infix fun Path.withChild(child: String): Path = resolve(child)
-
-infix fun <T> Predicate<T>.and(other: Predicate<T>) = this.and(other)
 
 fun <T : Comparable<T>> comparing(thiz: T, other: T, ifUndecideable: () -> Int): Int =
     thiz.compareTo(other).let { result ->

@@ -2,7 +2,9 @@ group 'at.reisisoft'
 version '0.1-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.+'
+    ext.jsoup_version = '1.11.3'
+    ext.kotlin_version = '1.2.40'
+    ext.junit_version = '5.1.1'
     ext.curTime = new Date().format('yyyy.MM.dd-HHmm')
     repositories {
         mavenCentral()
