@@ -29,7 +29,7 @@
                     <MenuItem onAction="#openOptionMenu" text="%options.title" />
                 </Menu>
                 <Menu text="%menu.help">
-                    <MenuItem text="%menu.about" />
+                    <MenuItem onAction="#openAbout" text="%menu.about" />
                     <MenuItem onAction="#openLicense" text="%menu.license" />
                     <SeparatorMenuItem />
                     <MenuItem text="%menu.manual" />

@@ -661,4 +661,17 @@ class MainUIController : Initializable, AutoCloseable {
             Legal.getLicenseHTML(languageSupport)
         )
     }
+
+    fun openAbout(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
+        println("Open about")
+        JavaFxUtils.loadFXML("aboutUI.fxml").let { loader ->
+            loader.resources = languageSupport
+            val parent: Parent = loader.load()
+
+            Stage().apply {
+                title = languageSupport.getString(ResourceKey.MENU_ABOUT)
+                scene = Scene(parent)
+            }.showAndWait()
+        }
+    }
 }

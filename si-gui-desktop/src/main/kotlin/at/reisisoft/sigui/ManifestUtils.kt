@@ -4,7 +4,7 @@ import at.reisisoft.sigui.ui.MainUI
 import java.util.jar.Manifest
 
 internal object ManifestUtils {
-    fun loadManifest(): Manifest? =
+    fun loadManifest(): Manifest =
         MainUI::class.java.classLoader.getResources("META-INF/MANIFEST.MF").let {
             it.asSequence().map {
                 try {
@@ -17,7 +17,7 @@ internal object ManifestUtils {
                 } catch (e: Exception) {
                     null
                 }
-            }.filterNotNull().firstOrNull()
+            }.filterNotNull().first()
         }
 }
 

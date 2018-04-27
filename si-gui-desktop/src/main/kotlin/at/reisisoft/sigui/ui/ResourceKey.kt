@@ -14,6 +14,7 @@ private val MANAGER = "manager"
 private val LICENSE = "license"
 private val MENU = "menu"
 private val OPTIONS = "options"
+private val ABOUT = "about"
 
 internal enum class ResourceKey(private val resourceBundleKey: String) {
     APPNAME("appname"),

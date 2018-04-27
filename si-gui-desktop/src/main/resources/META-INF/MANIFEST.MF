@@ -1,0 +1,2 @@
+Manifest-Version: 1.0
+Kotlin-SI-GUI-version: Development release
