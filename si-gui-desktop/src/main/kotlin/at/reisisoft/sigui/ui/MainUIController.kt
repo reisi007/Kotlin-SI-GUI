@@ -106,8 +106,11 @@ class MainUIController : Initializable, AutoCloseable {
                     val newWidth =
                         cancelDownloads.prefWidth + startInstallButton.prefWidth + /*added spacing*/+3 * 7
                     println("[$count] New window width is: $newWidth!")
+                    val newHeight = installationRootPane.height + menuBar.height + /*added spacing*/3 * 7 + 3
+                    println("[$count] New window height is: $newHeight!")
                     if (count in 3..4) {
                         stage.minWidth = newWidth
+                        stage.minHeight = newHeight
                         if (count == 4) {
                             println("Removing listener...")
                             removeListener(this)
@@ -608,6 +611,8 @@ class MainUIController : Initializable, AutoCloseable {
         }
     }
 
+    @FXML
+    private lateinit var menuBar: MenuBar
 
     //Menu
     private fun initMenu() {}
