@@ -50,7 +50,7 @@ object ParallelInstallation {
                                     "msiexec",
                                     "/qr",
                                     "/norestart",
-                                    "/LibreOfficeDownloadFileType.kt",
+                                    "/a",
                                     "\"$fileName\"",
                                     "TARGETDIR=\"$installLocation\""
                                 )

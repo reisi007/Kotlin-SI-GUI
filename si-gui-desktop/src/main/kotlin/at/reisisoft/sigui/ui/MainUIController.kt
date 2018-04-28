@@ -106,22 +106,22 @@ class MainUIController : Initializable, AutoCloseable {
                     val newWidth =
                         cancelDownloads.prefWidth + startInstallButton.prefWidth + /*added spacing*/+3 * 7
                     println("[$count] New window width is: $newWidth!")
-                    val newHeight = installationRootPane.height + menuBar.height + /*added spacing*/3 * 7 + 3
+                    val newHeight = rootPane.height + menuBar.height + /*added spacing*/6 * 7 + 3
                     println("[$count] New window height is: $newHeight!")
-                    if (count in 3..4) {
+                    if (count == 2) {
                         stage.minWidth = newWidth
                         stage.minHeight = newHeight
-                        if (count == 4) {
-                            println("Removing listener...")
-                            removeListener(this)
-                        }
+
+                        println("Removing listener...")
+                        removeListener(this)
+
                     }
                 }
             }.let {
                 addListener(it)
             }
         }
-        rootPane.preferWindowSize()
+
 
         initMenu()
         initDownloadList()

@@ -3,30 +3,29 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane prefHeight="200.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/8.0.121"
+
+<BorderPane fx:id="rootPane" prefHeight="200.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.DownloadUiConroller">
-    <BorderPane fx:id="rootPane" prefHeight="200.0" prefWidth="650.0">
-        <top>
-            <VBox spacing="7">
-                <Label fx:id="urlLabel" text="Set by code" BorderPane.alignment="CENTER"/>
-                <Label fx:id="pathLabel" text="Set by code" BorderPane.alignment="CENTER"/>
-            </VBox>
-        </top>
-        <bottom>
-            <ButtonBar BorderPane.alignment="CENTER">
-                <buttons>
-                    <Button fx:id="startDl" defaultButton="true" mnemonicParsing="false" text="%downloader.startdl"/>
-                    <Button fx:id="abort" alignment="CENTER" cancelButton="true" mnemonicParsing="false" text="%abort"/>
-                </buttons>
-            </ButtonBar>
-        </bottom>
-        <center>
-            <VBox fx:id="toFill" alignment="CENTER" prefHeight="140.0" prefWidth="558.0" spacing="7.0"
-                  BorderPane.alignment="CENTER">
-            </VBox>
-        </center>
-        <padding>
-            <Insets bottom="7.0" left="7.0" right="7.0" top="7.0"/>
-        </padding>
-    </BorderPane>
-</AnchorPane>
+    <top>
+        <VBox spacing="7">
+            <Label fx:id="urlLabel" text="Set by code" BorderPane.alignment="CENTER"/>
+            <Label fx:id="pathLabel" text="Set by code" BorderPane.alignment="CENTER"/>
+        </VBox>
+    </top>
+    <bottom>
+        <ButtonBar BorderPane.alignment="CENTER">
+            <buttons>
+                <Button fx:id="startDl" defaultButton="true" mnemonicParsing="false" text="%downloader.startdl"/>
+                <Button fx:id="abort" alignment="CENTER" cancelButton="true" mnemonicParsing="false" text="%abort"/>
+            </buttons>
+        </ButtonBar>
+    </bottom>
+    <center>
+        <VBox fx:id="toFill" alignment="CENTER" prefHeight="140.0" prefWidth="558.0" spacing="7.0"
+              BorderPane.alignment="CENTER">
+        </VBox>
+    </center>
+    <padding>
+        <Insets bottom="7.0" left="7.0" right="7.0" top="7.0"/>
+    </padding>
+</BorderPane>

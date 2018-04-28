@@ -29,8 +29,6 @@ class ManagerUiController : Initializable {
         private set
 
     @FXML
-    private lateinit var rootLayout: Pane
-    @FXML
     private lateinit var checkListView: CheckListView<Map.Entry<String, Array<Path>>>
     @FXML
     private lateinit var deleteProgress: ProgressIndicator
@@ -46,8 +44,6 @@ class ManagerUiController : Initializable {
 
     internal fun internalInitialize(settings: SiGuiSetting, executorService: ExecutorService) {
         this.settings = settings
-        //setup
-        rootLayout.preferWindowSize()
 
         // add items and prepare listview
         checkListView.cellFactory =

@@ -6,34 +6,32 @@
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.layout.*?>
 <?import org.controlsfx.control.CheckListView?>
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
+<BorderPane  prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.ManagerUiController">
-    <BorderPane fx:id="rootLayout" prefHeight="400.0" prefWidth="600.0">
-        <bottom>
-            <HBox prefHeight="40.0" prefWidth="200.0">
-                <ProgressIndicator fx:id="deleteProgress" visible="false">
-                    <HBox.margin>
-                        <Insets top="2.0"/>
-                    </HBox.margin>
-                    <padding>
-                        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
-                    </padding>
-                </ProgressIndicator>
-                <ButtonBar prefHeight="40.0" prefWidth="150.0" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
-                    <buttons>
-                        <Button fx:id="closeButton" cancelButton="true" mnemonicParsing="false" text="%abort"/>
-                        <Button fx:id="deleteButton" defaultButton="true" mnemonicParsing="false"
-                                text="%manager.delete"/>
-
-                    </buttons>
-                </ButtonBar>
+    <bottom>
+        <HBox prefHeight="40.0" prefWidth="200.0">
+            <ProgressIndicator fx:id="deleteProgress" visible="false">
+                <HBox.margin>
+                    <Insets top="2.0"/>
+                </HBox.margin>
                 <padding>
-                    <Insets left="7.0" right="7.0"/>
+                    <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
                 </padding>
-            </HBox>
-        </bottom>
-        <center>
-            <CheckListView fx:id="checkListView" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER"/>
-        </center>
-    </BorderPane>
-</AnchorPane>
+            </ProgressIndicator>
+            <ButtonBar prefHeight="40.0" prefWidth="150.0" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
+                <buttons>
+                    <Button fx:id="closeButton" cancelButton="true" mnemonicParsing="false" text="%abort"/>
+                    <Button fx:id="deleteButton" defaultButton="true" mnemonicParsing="false"
+                            text="%manager.delete"/>
+
+                </buttons>
+            </ButtonBar>
+            <padding>
+                <Insets left="7.0" right="7.0"/>
+            </padding>
+        </HBox>
+    </bottom>
+    <center>
+        <CheckListView fx:id="checkListView" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER"/>
+    </center>
+</BorderPane>

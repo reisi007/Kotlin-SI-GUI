@@ -52,13 +52,6 @@ internal fun Window.showFileChooser(
 operator fun DoubleExpression.times(double: Double): DoubleExpression = this.multiply(double)
 operator fun DoubleExpression.times(int: Int): DoubleExpression = this.multiply(int)
 
-internal fun Pane.preferWindowSize() {
-    sceneProperty().addListener { _, _, scene ->
-        prefWidthProperty().bind(scene.widthProperty())
-        prefHeightProperty().bind(scene.heightProperty())
-    }
-}
-
 internal fun Label.addDefaultTooltip() {
     tooltip = Tooltip().also {
         it.textProperty().bind(textProperty())

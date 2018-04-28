@@ -40,8 +40,6 @@ class DownloadUiConroller : Initializable {
     private lateinit var urlLabel: Label
     @FXML
     private lateinit var pathLabel: Label
-    @FXML
-    private lateinit var rootPane: Pane
 
     fun setDownloads(downloads: Map<LibreOfficeDownloadFileType, String>, baseUrl: String, downloadPath: Path) {
         if (alreadyInitialized)
@@ -63,7 +61,6 @@ class DownloadUiConroller : Initializable {
     }
 
     private fun internalInitialize() {
-        rootPane.preferWindowSize()
         startDl.closeStageOnClick()
         abort.onAction = EventHandler<ActionEvent> {
             downloads.clear()

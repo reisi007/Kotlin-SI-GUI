@@ -57,8 +57,6 @@ class OptionUIController : Initializable {
     @FXML
     private lateinit var downloadFolderLabel: Label
     @FXML
-    private lateinit var rootLayout: Pane
-    @FXML
     private lateinit var shortcutCreationEnabled: CheckBox
     @FXML
     private lateinit var shortcutCreationText: Label
@@ -80,8 +78,6 @@ class OptionUIController : Initializable {
     }
 
     private fun internalInitialize(executorService: ExecutorService) {
-        rootLayout.preferWindowSize()
-
         arrayOf(installFolderText, shortcutCreationText, downloadFolderText).forEach {
             it.addDefaultTooltip()
         }
@@ -152,35 +148,34 @@ class OptionUIController : Initializable {
             }
         }
 
-        //Setup download location
-        downloadFolderButton.onAction = EventHandler {
-            downloadFolderButton.scene.window.showDirectoryChooser(
-                languageSupport.getString(ResourceKey.OPTIONS_OPENFOLDER),
-                Paths.get(downloadFolderText.text)
-            )?.let { path ->
-                downloadFolderText.text = path.toString()
-            }
-        }
 
         downloadFolderText.text = settings.downloadFolder.toString()
         downloadFolderLabel.text = languageSupport.getString(ResourceKey.OPTIONS_DOWNLOADFOLDER)
 
-        //Setup installation folder
-        installFolderButton.onAction = EventHandler {
-            installFolderButton.scene.window.showDirectoryChooser(
-                languageSupport.getString(ResourceKey.OPTIONS_OPENFOLDER),
-                Paths.get(installFolderText.text)
-            )?.let { path ->
-                installFolderText.text = path.toString()
-            }
-        }
+
 
         installFolderText.text = settings.rootInstallationFolder.toString()
         installFolderLabel.text = languageSupport.getString(ResourceKey.OPTIONS_ROOTINSTALLFOLDER)
 
-        //Sortcut creation
+
         shortcutCreationEnabled.isSelected = settings.createDesktopShortCut
         shortcutCreationText.text = settings.shortcutDir.toString()
+
+        //Setup buttons
+        arrayOf(
+            downloadFolderButton to downloadFolderText,
+            installFolderButton to installFolderText,
+            shortcutCreationButton to shortcutCreationText
+        ).forEach { (button, label) ->
+            button.onAction = EventHandler {
+                button.scene.window.showDirectoryChooser(
+                    languageSupport.getString(ResourceKey.OPTIONS_OPENFOLDER),
+                    Paths.get(label.text)
+                )?.let { path ->
+                    label.text = path.toString()
+                }
+            }
+        }
     }
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
