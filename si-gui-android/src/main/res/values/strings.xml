@@ -4,4 +4,5 @@
     <string name="android_main_label">LibreOffice Android APKs</string>
     <string name="downloadStart"><![CDATA[Download & Start Installation]]></string>
     <string name="update">Update available APks</string>
+    <string name="download">Downloading</string>
 </resources>
