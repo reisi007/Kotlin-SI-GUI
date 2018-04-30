@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="at.reisisoft.sigui.android">
 
-    <permission android:name="REQUEST_INSTALL_PACKAGES" />
-    <permission android:name="INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:fullBackupContent="true"

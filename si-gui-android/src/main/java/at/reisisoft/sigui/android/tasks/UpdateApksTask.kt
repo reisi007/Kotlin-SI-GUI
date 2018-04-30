@@ -1,8 +1,6 @@
-package at.reisisoft.sigui.android.tasks;
+package at.reisisoft.sigui.android.tasks
 
-import android.content.Context
 import android.os.AsyncTask
-import at.reisisoft.sigui.android.ui.MainActivity
 import at.reisisoft.sigui.commons.downloads.DownloadInformation
 import at.reisisoft.sigui.commons.downloads.DownloadType
 import at.reisisoft.sigui.commons.downloads.PossibleDownloadHelper

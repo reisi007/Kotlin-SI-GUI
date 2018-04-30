@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import at.reisisoft.sigui.android.DisplayAbleDownloadInformation
 import at.reisisoft.sigui.android.R.layout.activity_main
 import at.reisisoft.sigui.android.getDownloadTypes
 import at.reisisoft.sigui.android.tasks.UpdateApksTask
@@ -29,6 +30,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(activity_main)
 
+        progressBar.visibility = View.GONE
+
         updateApks.setOnClickListener {
             UpdateApksTask({
                 progressBar.visibility = View.VISIBLE
@@ -37,29 +40,33 @@ class MainActivity : AppCompatActivity() {
                 val mainLibOSelection = mainLibO.selectedItemPosition
 
                 it.asSequence().flatMap { (k, v) ->
-                    v.asSequence().map { downloadTypeSpinnerMap[k] to it }
+                    v.asSequence().map { downloadTypeSpinnerMap[k] to DisplayAbleDownloadInformation(it) }
                 }.groupBy({ (spinner, _) ->
                     spinner
                 }, { (_, data) -> data }).forEach { (k, data) ->
                     k?.let {
-                        ArrayAdapter<DownloadInformation>(
-                            this,
-                            it.id,
-                            data.toTypedArray()
-                        )
+                        (it.adapter as? ArrayAdapter<DisplayAbleDownloadInformation> ?: kotlin.run {
+                            ArrayAdapter<DisplayAbleDownloadInformation>(
+                                this,
+                                android.R.layout.simple_spinner_dropdown_item
+                            ).apply {
+                                it.adapter = this
+                            }
+                        }).also {
+                            it.clear()
+                            it.addAll(data)
+                        }
                     }
                 }
                 siRemote.setSelection(siRemoteSelection)
                 mainLibO.setSelection(mainLibOSelection)
-
 
                 progressBar.visibility = View.GONE
             }).execute(*downloadTypes)
         }
 
         startInstallation.setOnClickListener {
-
-
+            TODO()
         }
     }
 }

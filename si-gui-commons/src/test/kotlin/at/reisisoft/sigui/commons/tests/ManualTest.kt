@@ -1,4 +1,4 @@
-package at.reisisoft.sigui.commons.tests;
+package at.reisisoft.sigui.commons.tests
 
 import at.reisisoft.sigui.commons.downloads.DownloadInformation
 import at.reisisoft.sigui.commons.downloads.DownloadLocation
@@ -47,7 +47,7 @@ class ManualTest {
 
     @Test
     fun manualTestAndroidViewer() =
-        PossibleDownloadHelper.fetchPossibleFor(listOf(ANDROID_LIBREOFFICE_ARM)).prettyPrint()
+        PossibleDownloadHelper.fetchPossibleFor(listOf(ANDROID_LIBREOFFICE_ARM, ANDROID_LIBREOFFICE_X86)).prettyPrint()
 
     @Test
     fun manualTestLinux() =

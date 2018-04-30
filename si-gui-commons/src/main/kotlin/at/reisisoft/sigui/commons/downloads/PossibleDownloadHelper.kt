@@ -49,7 +49,7 @@ object PossibleDownloadHelper {
             for (e in elements) {
                 e.attr("href").let { possibleVersionInformation ->
                     if (possibleVersionInformation == firstDesktopArchiveVersion)
-                        firstVersionSeen = true;
+                        firstVersionSeen = true
 
                     if (firstVersionSeen) {
                         possibleVersionInformation.substring(0, possibleVersionInformation.length - 1)
@@ -105,9 +105,22 @@ object PossibleDownloadHelper {
         folderContainsString: String,
         baseUrlDocument: Document
     ): SortedSet<DownloadInformation> = baseUrlDocument.select("a[href~=$folderContainsString]").let {
-        it.asSequence().flatMap {
-            sequenceOf(DownloadType.ANDROID_LIBREOFFICE_X86, DownloadType.ANDROID_LIBREOFFICE_ARM).map { dlType ->
-                it.attr("href").let {
+        it.asSequence().drop(1).flatMap {
+            it.attr("href").let {
+                emptySequence<DownloadType>().let { seq ->
+                    if (it.contains("sdremote", true))
+                        seq.plus(DownloadType.ANDROID_REMOTE)
+                    else {
+                        val x86 = it.contains("x86", true)
+                        val arm = it.contains("arm", true)
+                        if (x86 xor arm) {
+                            if (x86)
+                                seq.plus(DownloadType.ANDROID_LIBREOFFICE_X86)
+                            else
+                                seq.plus(DownloadType.ANDROID_LIBREOFFICE_ARM)
+                        } else seq.plus(DownloadType.ANDROID_LIBREOFFICE_X86).plus(DownloadType.ANDROID_LIBREOFFICE_ARM)
+                    }
+                }.map { dlType ->
                     DownloadInformation(
                         "${baseUrlDocument.location()}$it",
                         it.substring(0, it.length - 1),
@@ -126,7 +139,16 @@ object PossibleDownloadHelper {
                     getCorrectBaseUrlForOS(
                         "${rootDoocument.location()}$urlFragment",
                         "TESTING ${urlFragment.let { it.substring(0, it.length - 1) }}",
-                        TreeSet(downloadTypes).apply { remove(DownloadType.WINDOWSEXE) }
+                        TreeSet(downloadTypes).apply {
+                            removeAll(
+                                arrayOf(
+                                    DownloadType.WINDOWSEXE,
+                                    DownloadType.ANDROID_LIBREOFFICE_ARM,
+                                    DownloadType.ANDROID_LIBREOFFICE_X86,
+                                    DownloadType.ANDROID_REMOTE
+                                )
+                            )
+                        }
                     ).asSequence()
                 }.toSortedSet()
         }
@@ -166,7 +188,16 @@ object PossibleDownloadHelper {
                     getCorrectBaseUrlForOS(
                         "${rootDocument.location()}$urlFragment",
                         release.toString(),
-                        TreeSet(downloadTypes).apply { remove(DownloadType.WINDOWSEXE) }
+                        TreeSet(downloadTypes).apply {
+                            removeAll(
+                                arrayOf(
+                                    DownloadType.WINDOWSEXE,
+                                    DownloadType.ANDROID_LIBREOFFICE_ARM,
+                                    DownloadType.ANDROID_LIBREOFFICE_X86,
+                                    DownloadType.ANDROID_REMOTE
+                                )
+                            )
+                        }
                     ).asSequence()
                 } ?: emptySequence()
         }.toSortedSet()
@@ -260,13 +291,13 @@ object PossibleDownloadHelper {
                 true
             ) -> setOf(if (thinderboxName.contains("x86_64")) DownloadType.WINDOWS64 else DownloadType.WINDOWS32)
 
-            thinderboxName.contains("android", true) -> setOf(
-                when {
-                    thinderboxName.contains("x86") -> DownloadType.ANDROID_LIBREOFFICE_X86
-                    else -> DownloadType.ANDROID_LIBREOFFICE_ARM
-                //No remote master
-                }
-            )
+            thinderboxName.contains("android", true) -> mutableSetOf<DownloadType>().apply {
+                if (thinderboxName.contains("x86", true))
+                    add(DownloadType.ANDROID_LIBREOFFICE_X86)
+                if (thinderboxName.contains("arm", true))
+                    add(DownloadType.ANDROID_LIBREOFFICE_ARM)
+            }
+
 
             thinderboxName.contains("macos", true) -> setOf(DownloadType.MAC)
 

@@ -9,11 +9,13 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.support.v4.content.FileProvider
+import android.util.Log
 import at.reisisoft.sigui.commons.downloads.DownloadType
 import java.io.File
+import java.util.*
 
 fun getDownloadTypes(): Set<DownloadType> =
-    Build.SUPPORTED_ABIS.asSequence().map {
+    Build.SUPPORTED_ABIS.apply { Log.i("HARDWARE INFO", Arrays.toString(this)) }.asSequence().map {
         when {
             it.contains("arm", true) -> DownloadType.ANDROID_LIBREOFFICE_ARM
             it.contains("x86", true) -> DownloadType.ANDROID_LIBREOFFICE_X86
@@ -26,17 +28,17 @@ internal fun Activity.installApk(downloadFile: File) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
         FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", downloadFile).let {
             Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-                setData(it)
-                setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                data = it
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
             }.also { startActivity(it) }
         }
     else {
         Uri.fromFile(downloadFile).let {
             Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(it, "application/vnd.android.package-archive");
-                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                setDataAndType(it, "application/vnd.android.package-archive")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }.also { startActivity(it) }
-            startActivity(intent);
+            startActivity(intent)
         }
     }
 }
