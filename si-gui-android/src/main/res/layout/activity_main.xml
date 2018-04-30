@@ -63,10 +63,12 @@
                 android:id="@+id/progressBar"
                 style="?android:attr/progressBarStyle"
                 android:layout_width="match_parent"
-                android:layout_height="113dp" />
+                android:layout_height="113dp"
+                android:indeterminate="true"
+                tools:visibility="gone" />
 
             <Button
-                android:id="@+id/startInastallation"
+                android:id="@+id/startInstallation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/downloadStart" />

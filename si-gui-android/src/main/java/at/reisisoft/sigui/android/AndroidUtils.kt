@@ -22,7 +22,7 @@ fun getDownloadTypes(): Set<DownloadType> =
     }.filterNotNull().plus(DownloadType.ANDROID_REMOTE).toSet()
 
 // https://stackoverflow.com/questions/39147608/android-install-apk-with-intent-view-action-not-working-with-file-provider/40131196#40131196
-fun Activity.installApk(downloadFile: File) {
+internal fun Activity.installApk(downloadFile: File) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
         FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", downloadFile).let {
             Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
@@ -44,7 +44,7 @@ fun Activity.installApk(downloadFile: File) {
 private fun String.extractFileName() = substring(lastIndexOf('/') + 1, length)
 
 //https://stackoverflow.com/a/4969421/1870799
-fun Activity.asyncDownloadFile(urlAsString: String) =
+internal fun Activity.asyncDownloadAndInstall(urlAsString: String): File? =
     urlAsString.extractFileName().let { fileName ->
         File(applicationContext.cacheDir, fileName).let { toFile ->
             Uri.parse("file://$toFile").let { fileUri ->
@@ -58,8 +58,8 @@ fun Activity.asyncDownloadFile(urlAsString: String) =
             }.let { request ->
                 getSystemService(Context.DOWNLOAD_SERVICE).let {
                     it as? DownloadManager ?: throw IllegalStateException("DownloadmManager not foun!")
-                }.apply {
-                    enqueue(request).let { downloadId ->
+                }.let { dlM ->
+                    dlM.enqueue(request).let { downloadId ->
                         object : BroadcastReceiver() {
                             override fun onReceive(context: Context, intent: Intent) {
                                 Intent(Intent.ACTION_VIEW).let { i ->
@@ -69,8 +69,9 @@ fun Activity.asyncDownloadFile(urlAsString: String) =
                                 }
                             }
                         }
-                    }.let {
+                    }.let freturn@{
                         registerReceiver(it, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+                        return@freturn toFile
                     }
                 }
             }
