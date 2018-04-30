@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">Reisisoft SI GUI</string>
+    <string name="app_name">Reisisoft SI-GUI</string>
+    <string name="label_remote_apks">LibreOffice Android remote APKs:</string>
+    <string name="android_main_label">LibreOffice Android APKs</string>
+    <string name="downloadStart"><![CDATA[Download & Start Installation]]></string>
+    <string name="update">Update available APks</string>
 </resources>
