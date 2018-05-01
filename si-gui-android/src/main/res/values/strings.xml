@@ -5,4 +5,5 @@
     <string name="downloadStart"><![CDATA[Download & Start Installation]]></string>
     <string name="update">Update available APks</string>
     <string name="download">Downloading</string>
+    <string name="curSelection">Currently selected item to download:</string>
 </resources>

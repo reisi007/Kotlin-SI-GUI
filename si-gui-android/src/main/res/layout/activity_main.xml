@@ -38,7 +38,7 @@
                 android:text="@string/label_remote_apks" />
 
             <Spinner
-                android:id="@+id/siRemote"
+                android:id="@+id/sdRemote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
@@ -66,6 +66,13 @@
                 android:layout_height="113dp"
                 android:indeterminate="true"
                 tools:visibility="gone" />
+
+            <TextView
+                android:id="@+id/curSelection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/curSelection"
+                android:textSize="18sp" />
 
             <Button
                 android:id="@+id/startInstallation"
