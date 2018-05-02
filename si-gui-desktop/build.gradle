@@ -9,8 +9,6 @@ apply plugin: 'application'
 
 mainClassName = "at.reisisoft.sigui.ui.MainUI"
 
-ext.kotlin_html = "0.6.+"
-
 repositories {
     mavenCentral()
     jcenter()

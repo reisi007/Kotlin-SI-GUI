@@ -1,17 +1,18 @@
 package at.reisisoft.sigui.android.ui
 
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import android.webkit.WebView
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
-import at.reisisoft.sigui.android.AndroidSettings
-import at.reisisoft.sigui.android.DisplayAbleDownloadInformation
-import at.reisisoft.sigui.android.R
+import at.reisisoft.sigui.android.*
 import at.reisisoft.sigui.android.R.layout.activity_main
-import at.reisisoft.sigui.android.getDownloadTypes
+import at.reisisoft.sigui.android.tasks.DownloadApkTask
 import at.reisisoft.sigui.android.tasks.UpdateApksTask
+import at.reisisoft.sigui.commons.downloads.DownloadInformation
 import at.reisisoft.sigui.commons.downloads.DownloadType
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -60,9 +61,12 @@ class MainActivity : AppCompatActivity() {
                         ?: 0) + (it[DownloadType.ANDROID_LIBREOFFICE_X86]?.size ?: 0)
 
                 ArrayList<DisplayAbleDownloadInformation>(listSize).apply {
-                    (it.getValue(DownloadType.ANDROID_LIBREOFFICE_ARM).asSequence() + it.getValue(DownloadType.ANDROID_LIBREOFFICE_X86).asSequence()).map {
+                    emptySequence<DownloadInformation>().let { seq ->
+                        it[DownloadType.ANDROID_LIBREOFFICE_ARM]?.let { seq + it }
+                        it[DownloadType.ANDROID_LIBREOFFICE_X86]?.let { seq + it }
+                    }?.map {
                         DisplayAbleDownloadInformation(it)
-                    }.forEach {
+                    }?.forEach {
                         add(it)
                     }
                     settings = settings.copy(main = this)
@@ -131,7 +135,31 @@ class MainActivity : AppCompatActivity() {
         }
 
         startInstallation.setOnClickListener {
-            TODO()
+            if (progressBar.visibility == View.GONE) {
+                if (::lastSelectedDownloadInformation.isInitialized)
+                    DownloadApkTask(
+                        applicationContext,
+                        downloadProgress
+                    ).execute(lastSelectedDownloadInformation.downloadInformation)
+            }
+        }
+
+        clearCache.setOnClickListener {
+            deleteCache()
+            showToast(R.string.clear_cache_done)
+        }
+
+        legal.setOnClickListener {
+            AlertDialog.Builder(this).also {
+                it.setTitle(R.string.about_licenses)
+                WebView(this).apply {
+                    loadData(LEGAL_HTML, "text/html", "utf-8")
+                    it.setView(this)
+                }
+                it.setNegativeButton(R.string.close) { dialog, _ ->
+                    dialog.dismiss()
+                }
+            }.show()
         }
     }
 

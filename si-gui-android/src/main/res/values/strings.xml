@@ -6,4 +6,9 @@
     <string name="update">Update available APks</string>
     <string name="download">Downloading</string>
     <string name="curSelection">Currently selected item to download:</string>
+    <string name="fileProvider" translatable="false">reisi007.github.io/kotlin-si-gui.fileprovider</string>
+    <string name="about_licenses"><![CDATA[About & Licenses]]></string>
+    <string name="clear_cache">Clear cache</string>
+    <string name="clear_cache_done">Cache was cleared successfully!</string>
+    <string name="close">Close</string>
 </resources>

@@ -1,84 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.MainActivity">
+                                             xmlns:app="http://schemas.android.com/apk/res-auto"
+                                             xmlns:tools="http://schemas.android.com/tools"
+                                             android:layout_width="match_parent"
+                                             android:layout_height="match_parent"
+                                             tools:context=".ui.MainActivity">
 
     <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" tools:layout_editor_absoluteY="70dp"
+            tools:layout_editor_absoluteX="0dp">
 
         <LinearLayout
-            android:layout_width="match_parent"
+                android:layout_width="match_parent"
 
-            android:layout_height="wrap_content"
-            android:layout_margin="0dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:divider="?android:dividerHorizontal"
-            android:foregroundGravity="center_vertical|center_horizontal"
-            android:gravity="center_vertical|center_horizontal"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:showDividers="middle"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+                android:layout_height="wrap_content"
+                android:layout_margin="0dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:divider="?android:dividerHorizontal"
+                android:foregroundGravity="center_vertical|center_horizontal"
+                android:gravity="center_vertical|center_horizontal"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:showDividers="middle"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/siRemoteLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/label_remote_apks" />
+                    android:id="@+id/siRemoteLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_remote_apks"/>
 
             <Spinner
-                android:id="@+id/sdRemote"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    android:id="@+id/sdRemote"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
             <TextView
-                android:id="@+id/mainLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/android_main_label" />
+                    android:id="@+id/mainLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/android_main_label"/>
 
             <Spinner
-                android:id="@+id/mainLibO"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                    android:id="@+id/mainLibO"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
             <Button
-                android:id="@+id/updateApks"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/update" />
+                    android:id="@+id/updateApks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/update"/>
 
             <ProgressBar
-                android:id="@+id/progressBar"
-                style="?android:attr/progressBarStyle"
-                android:layout_width="match_parent"
-                android:layout_height="113dp"
-                android:indeterminate="true"
-                tools:visibility="gone" />
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="113dp"
+                    android:indeterminate="true"
+                    tools:visibility="gone"/>
 
             <TextView
-                android:id="@+id/curSelection"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/curSelection"
-                android:textSize="18sp" />
+                    android:id="@+id/curSelection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/curSelection"
+                    android:textSize="18sp"/>
 
             <Button
-                android:id="@+id/startInstallation"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/downloadStart" />
+                    android:id="@+id/startInstallation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/downloadStart"/>
+
+            <ProgressBar
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/downloadProgress" android:visibility="gone" android:max="100"/>
+
+            <Button
+                    android:text="@string/about_licenses"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:id="@+id/legal"/>
+
+            <Button
+                    android:text="@string/clear_cache"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:id="@+id/clearCache"/>
         </LinearLayout>
     </ScrollView>
 

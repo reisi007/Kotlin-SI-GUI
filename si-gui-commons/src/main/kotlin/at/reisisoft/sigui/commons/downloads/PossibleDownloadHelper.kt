@@ -88,21 +88,41 @@ object PossibleDownloadHelper {
             return downloadVersionInfo
         }
 
-
+    private const val ARCHIVE_LOVIEWER = "loviewer"
     private fun possibleArchive(downloadTypes: Set<DownloadType>): SortedSet<DownloadInformation> =
         parseHtmlDocument(DownloadUrls.ARCHIVE).let { rootDocument ->
             val downloads = TreeSet<DownloadInformation>()
-            if (downloadTypes.contains(DownloadType.ANDROID_LIBREOFFICE_ARM) || downloadTypes.contains(DownloadType.ANDROID_LIBREOFFICE_X86))
-                downloads += possibleArchiveAndroid("loviewer", rootDocument)
+            if (downloadTypes.contains(DownloadType.ANDROID_LIBREOFFICE_ARM))
+                downloads += possibleArchiveAndroid(
+                    ARCHIVE_LOVIEWER,
+                    DownloadType.ANDROID_LIBREOFFICE_ARM,
+                    rootDocument
+                )
+            if (downloadTypes.contains(DownloadType.ANDROID_LIBREOFFICE_X86))
+                downloads += possibleArchiveAndroid(
+                    ARCHIVE_LOVIEWER,
+                    DownloadType.ANDROID_LIBREOFFICE_X86,
+                    rootDocument
+                )
             if (downloadTypes.contains(DownloadType.ANDROID_REMOTE))
-                downloads += possibleArchiveAndroid("sdremote", rootDocument)
-            downloads += possibleArchiveDesktop(rootDocument, downloadTypes)
+                downloads += possibleArchiveAndroid("sdremote", DownloadType.ANDROID_REMOTE, rootDocument)
+            downloadTypes.minus(
+                sequenceOf(
+                    DownloadType.ANDROID_REMOTE,
+                    DownloadType.ANDROID_LIBREOFFICE_X86,
+                    DownloadType.ANDROID_LIBREOFFICE_ARM
+                )
+            ).let { desktopDownloadTypes ->
+                if (desktopDownloadTypes.isNotEmpty())
+                    downloads += possibleArchiveDesktop(rootDocument, desktopDownloadTypes)
+            }
             return@let downloads
         }
 
 
     private fun possibleArchiveAndroid(
         folderContainsString: String,
+        downloadType: DownloadType,
         baseUrlDocument: Document
     ): SortedSet<DownloadInformation> = baseUrlDocument.select("a[href~=$folderContainsString]").let {
         it.asSequence().drop(1).flatMap {
@@ -120,7 +140,7 @@ object PossibleDownloadHelper {
                                 seq.plus(DownloadType.ANDROID_LIBREOFFICE_ARM)
                         } else seq.plus(DownloadType.ANDROID_LIBREOFFICE_X86).plus(DownloadType.ANDROID_LIBREOFFICE_ARM)
                     }
-                }.map { dlType ->
+                }.filter { it == downloadType }.map { dlType ->
                     DownloadInformation(
                         "${baseUrlDocument.location()}$it",
                         it.substring(0, it.length - 1),
@@ -324,6 +344,33 @@ object PossibleDownloadHelper {
                 setOf(DownloadType.UNKNOWN)
             }
         }
+
+    fun getAndroidFinalDownloadUrl(di: DownloadInformation): String? = di.let { (baseUrl, _, downloadType) ->
+        when (downloadType) {
+            DownloadType.ANDROID_LIBREOFFICE_X86 -> { s: String ->
+                s.contains("x86", true) && s.contains(
+                    ".apk",
+                    true
+                )
+            }
+            else -> { s: String -> s.contains(".apk", true) }
+        }.let { stringPredicate ->
+            baseUrl.let {
+                if (downloadType == DownloadType.ANDROID_REMOTE)
+                    "${it}playstore/"
+                else
+                    it
+            }.let { finalBaseUrl ->
+                parseHtmlDocument(finalBaseUrl).let { rootDocument ->
+                    rootDocument.select("a[href]").asSequence().map {
+                        it.attr("href")
+                    }.filter { stringPredicate(it) }.firstOrNull()?.let { apkName ->
+                        "${rootDocument.location()}$apkName"
+                    }
+                }
+            }
+        }
+    }
 
     fun getFinalDownloadUrls(
         baseUrl: String,
