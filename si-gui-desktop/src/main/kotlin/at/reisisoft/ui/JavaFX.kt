@@ -4,14 +4,14 @@ import javafx.application.Platform
 import javafx.beans.binding.DoubleExpression
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
-import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.Tooltip
-import javafx.scene.layout.Pane
 import javafx.scene.text.Font
-import javafx.scene.web.WebView
-import javafx.stage.*
+import javafx.stage.DirectoryChooser
+import javafx.stage.FileChooser
+import javafx.stage.Stage
+import javafx.stage.Window
 import java.io.InputStreamReader
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
@@ -66,23 +66,6 @@ val UNCAUGHT_EXCEPTION_HANDLER = Thread.UncaughtExceptionHandler { _, t ->
     JavaFxUtils.showError(t)
 }
 
-internal fun Window.showWebView(title: String, html: String) =
-    also {
-        Stage().apply {
-            this.title = title
-            initOwner(it)
-            initModality(Modality.APPLICATION_MODAL)
-            WebView().also { webView ->
-                webView.engine.loadContent(html)
-
-                Scene(webView, 500.0, 300.0).also {
-                    scene = it
-                }
-            }
-        }.showAndWait()
-
-    }
-
 //Not needed in JDK 10 or above
 fun loadEncodedRessource(
     resourcebundleName: String,
@@ -98,21 +81,21 @@ fun loadEncodedRessource(
             reload: Boolean
         ): ResourceBundle? {
             // The below is a copy of the default implementation.
-            val bundleName = toBundleName(baseName, locale);
-            val resourceName = toResourceName(bundleName, "properties");
+            val bundleName = toBundleName(baseName, locale)
+            val resourceName = toResourceName(bundleName, "properties")
             return if (reload) {
-                val url = loader?.getResource(resourceName);
+                val url = loader?.getResource(resourceName)
                 url?.let {
                     url.openConnection()?.let {
                         it.useCaches = false
-                        it.getInputStream();
+                        it.getInputStream()
                     }
                 }
             } else {
-                loader?.getResourceAsStream(resourceName);
+                loader?.getResourceAsStream(resourceName)
             }?.use {
                 // Only this line is changed to make it to read properties files as UTF-8.
-                return PropertyResourceBundle(InputStreamReader(it, chartset));
+                return PropertyResourceBundle(InputStreamReader(it, chartset))
             }
         }
     })

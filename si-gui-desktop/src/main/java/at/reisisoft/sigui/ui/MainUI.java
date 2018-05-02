@@ -1,20 +1,24 @@
 package at.reisisoft.sigui.ui;
 
-import at.reisisoft.sigui.ManifestUtils;
 import at.reisisoft.sigui.settings.SettingsKt;
 import at.reisisoft.sigui.settings.SiGuiSetting;
 import at.reisisoft.ui.JavaFXKt;
 import at.reisisoft.ui.JavaFxUtils;
 import javafx.application.Application;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import kotlin.collections.CollectionsKt;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class MainUI extends Application {
@@ -24,6 +28,15 @@ public class MainUI extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Thread.currentThread().setUncaughtExceptionHandler(JavaFXKt.getUNCAUGHT_EXCEPTION_HANDLER());
+
+        ObservableList<Image> icons = primaryStage.getIcons();
+        CollectionsKt.listOf("48", "72", "96", "144", "192").forEach(it -> {
+            try (InputStream icon = MainUI.class.getClassLoader().getResource("icons/" + it + ".png").openStream()) {
+                icons.add(new Image(icon));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
 
         SiGuiSetting settings = SettingsKt.loadSettings();
         Locale.setDefault(settings.getUiLanguage());

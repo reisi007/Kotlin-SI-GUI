@@ -5,7 +5,6 @@ import at.reisisoft.sigui.SiGuiManifestEntries
 import at.reisisoft.sigui.getValue
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
-import javafx.scene.control.ScrollPane
 import javafx.scene.control.TextArea
 import java.net.URL
 import java.util.*
@@ -16,8 +15,6 @@ class AboutUIController : Initializable {
 
     @FXML
     private lateinit var versionInfo: TextArea
-    @FXML
-    private lateinit var rootPane: ScrollPane
 
     private lateinit var languageSupport: ResourceBundle
 

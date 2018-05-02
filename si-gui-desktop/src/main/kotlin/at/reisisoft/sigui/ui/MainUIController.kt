@@ -22,6 +22,7 @@ import javafx.beans.value.ObservableValue
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXML
+import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
 import javafx.scene.Parent
 import javafx.scene.Scene
@@ -29,8 +30,11 @@ import javafx.scene.control.*
 import javafx.scene.layout.Pane
 import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
+import javafx.scene.web.WebView
 import javafx.stage.FileChooser
+import javafx.stage.Modality
 import javafx.stage.Stage
+import javafx.stage.Window
 import javafx.util.StringConverter
 import java.net.URL
 import java.nio.file.FileAlreadyExistsException
@@ -51,7 +55,7 @@ class MainUIController : Initializable, AutoCloseable {
     @FXML
     private lateinit var downloadAccordion: Accordion
     private lateinit var languageSupport: ResourceBundle
-    private lateinit var stage: Stage
+    private lateinit var rootStage: Stage
 
 
     private var downloadInformation: MutableList<Triple<DownloadLocation, ComboBox<DownloadInformation>, TitledPane>> =
@@ -82,7 +86,7 @@ class MainUIController : Initializable, AutoCloseable {
     internal fun setSettings(newSettings: SiGuiSetting, stage: Stage) {
         if (!::settings.isInitialized) {
             settings = newSettings
-            this.stage = stage
+            rootStage = stage
             try {
                 internalInitialize()
             } catch (t: Throwable) {
@@ -109,8 +113,8 @@ class MainUIController : Initializable, AutoCloseable {
                     val newHeight = rootPane.height + menuBar.height + /*added spacing*/6 * 7 + 3
                     println("[$count] New window height is: $newHeight!")
                     if (count == 2) {
-                        stage.minWidth = newWidth
-                        stage.minHeight = newHeight
+                        rootStage.minWidth = newWidth
+                        rootStage.minHeight = newHeight
 
                         println("Removing listener...")
                         removeListener(this)
@@ -329,24 +333,26 @@ class MainUIController : Initializable, AutoCloseable {
         println("Open Options menu")
         JavaFxUtils.loadFXML("optionUI.fxml").let { loader ->
             loader.resources = languageSupport
-            val parent: Parent = loader.load()
-            loader.getController<OptionUIController>()!!
-                .let controller@{ optionController ->
-                    optionController.internalInitialize(settings, executorService)
-                    Stage().apply {
-                        //TODO https://stackoverflow.com/questions/15041760/javafx-open-new-window
-                        title = languageSupport.getString(ResourceKey.OPTIONS_TITLE)
-                        scene = Scene(parent)
-                    }.showAndWait()
-                    optionController.updateSettings()
-                    return@controller optionController.settings
-                }.also { newSettings ->
-                    settings = newSettings
-                    settings.asyncPersist()
-                }
+            loader.loadAsParent().let { parent ->
+                loader.getController<OptionUIController>()!!
+                    .let controller@{ optionController ->
+                        optionController.internalInitialize(settings, executorService)
+
+                        parent.showAsDialog(ResourceKey.OPTIONS_TITLE)
+
+                        optionController.updateSettings()
+                        return@controller optionController.settings
+                    }.also { newSettings ->
+                        settings = newSettings
+                        settings.asyncPersist()
+                    }
+            }
         }
 
     }
+
+    private fun FXMLLoader.loadAsParent() = this.load() as Parent
+
 
     private var downloadWindowsOpenTaskStarted = false
     fun openDownloadMenu(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
@@ -367,25 +373,21 @@ class MainUIController : Initializable, AutoCloseable {
                         //Open
                         JavaFxUtils.loadFXML("downloadUI.fxml").let {
                             it.resources = languageSupport
-                            val parent: Parent = it.load()
                             runOnUiThread {
-                                it.getController<DownloadUiConroller>().let controller@{ controller ->
-                                    controller.setDownloads(
-                                        downloads,
-                                        information.baseUrl,
-                                        settings.downloadFolder
-                                    )
-                                    Stage().apply {
-                                        title =
-                                                languageSupport.getString(ResourceKey.DOWNLOADER_TITLE)
-                                        scene = Scene(parent)
-                                        onCloseRequest = EventHandler {
+                                it.loadAsParent().let { parent ->
+                                    it.getController<DownloadUiConroller>().let controller@{ controller ->
+                                        controller.setDownloads(
+                                            downloads,
+                                            information.baseUrl,
+                                            settings.downloadFolder
+                                        )
+                                        parent.showAsDialog(ResourceKey.DOWNLOADER_TITLE) {
                                             controller.downloads.clear()
                                         }
-                                    }.showAndWait()
 
-                                    downloadWindowsOpenTaskStarted = false
-                                    controller.downloads as Map<LibreOfficeDownloadFileType, String>
+                                        downloadWindowsOpenTaskStarted = false
+                                        controller.downloads as Map<LibreOfficeDownloadFileType, String>
+                                    }
                                 }.let { downloads ->
                                     if (downloads.isNotEmpty())
                                         downloads.forEach { fileType, fileName ->
@@ -595,19 +597,28 @@ class MainUIController : Initializable, AutoCloseable {
         println("Open manager")
         JavaFxUtils.loadFXML("managerUI.fxml").let { loader ->
             loader.resources = languageSupport
-            val parent: Parent = loader.load()
-            loader.getController<ManagerUiController>()!!.let controller@{ controller ->
-                controller.internalInitialize(settings, executorService)
-                Stage().apply {
-                    title = languageSupport.getString(ResourceKey.MENU_MANAGER)
-                    scene = Scene(parent)
-                }.showAndWait()
-                return@controller controller.settings
+            loader.loadAsParent().let { parent ->
+                loader.getController<ManagerUiController>()!!.let controller@{ controller ->
+                    controller.internalInitialize(settings, executorService)
+
+                    parent.showAsDialog(ResourceKey.MENU_MANAGER)
+
+                    return@controller controller.settings
+                }
             }.also { newSettings ->
                 settings = newSettings
                 settings.asyncPersist()
             }
         }
+    }
+
+    private fun Parent.showAsDialog(titleKey: ResourceKey, onClose: () -> Unit = {}) {
+        Stage().also {
+            it.title = languageSupport.getString(titleKey)
+            it.scene = Scene(this)
+            it.icons.addAll(rootStage.icons)
+            it.onCloseRequest = EventHandler { onClose() }
+        }.showAndWait()
     }
 
     @FXML
@@ -656,21 +667,33 @@ class MainUIController : Initializable, AutoCloseable {
 
     fun openLicense(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
         rootPane.scene.window.showWebView(
-            languageSupport.getString(ResourceKey.MENU_LICENSE),
+            ResourceKey.MENU_LICENSE,
             Legal.getLicenseHTML(languageSupport)
         )
     }
+
+    internal fun Window.showWebView(titleKey: ResourceKey, html: String) =
+        also {
+            Stage().apply {
+                title = languageSupport.getString(titleKey)
+                initOwner(it)
+                icons.addAll(rootStage.icons)
+                initModality(Modality.APPLICATION_MODAL)
+                WebView().also { webView ->
+                    webView.engine.loadContent(html)
+
+                    Scene(webView, 500.0, 300.0).also {
+                        scene = it
+                    }
+                }
+            }.showAndWait()
+        }
 
     fun openAbout(@Suppress("UNUSED_PARAMETER") actionEvent: ActionEvent) {
         println("Open about")
         JavaFxUtils.loadFXML("aboutUI.fxml").let { loader ->
             loader.resources = languageSupport
-            val parent: Parent = loader.load()
-
-            Stage().apply {
-                title = languageSupport.getString(ResourceKey.MENU_ABOUT)
-                scene = Scene(parent)
-            }.showAndWait()
+            loader.loadAsParent().showAsDialog(ResourceKey.MENU_ABOUT)
         }
     }
 }

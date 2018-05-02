@@ -6,8 +6,9 @@
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.layout.*?>
 <?import org.controlsfx.control.CheckListView?>
-<BorderPane  prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.ManagerUiController">
+<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.reisisoft.sigui.ui.ManagerUiController"
+            stylesheets="style.css">
     <bottom>
         <HBox prefHeight="40.0" prefWidth="200.0">
             <ProgressIndicator fx:id="deleteProgress" visible="false">
@@ -21,8 +22,7 @@
             <ButtonBar prefHeight="40.0" prefWidth="150.0" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
                 <buttons>
                     <Button fx:id="closeButton" cancelButton="true" mnemonicParsing="false" text="%abort"/>
-                    <Button fx:id="deleteButton" defaultButton="true" mnemonicParsing="false"
-                            text="%manager.delete"/>
+                    <Button fx:id="deleteButton" defaultButton="true" mnemonicParsing="false" text="%manager.delete"/>
 
                 </buttons>
             </ButtonBar>
