@@ -4,6 +4,8 @@ import javafx.application.Platform
 import javafx.beans.binding.DoubleExpression
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
+import javafx.fxml.FXMLLoader
+import javafx.scene.Parent
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.Tooltip
@@ -65,6 +67,8 @@ val UNCAUGHT_EXCEPTION_HANDLER = Thread.UncaughtExceptionHandler { _, t ->
     t.printStackTrace()
     JavaFxUtils.showError(t)
 }
+
+fun FXMLLoader.loadAsParent() = this.load() as Parent
 
 //Not needed in JDK 10 or above
 fun loadEncodedRessource(

@@ -22,7 +22,6 @@ import javafx.beans.value.ObservableValue
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXML
-import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
 import javafx.scene.Parent
 import javafx.scene.Scene
@@ -82,8 +81,8 @@ class MainUIController : Initializable, AutoCloseable {
 
     private lateinit var settings: SiGuiSetting
 
-    @JvmName("internalInitialize")
-    internal fun setSettings(newSettings: SiGuiSetting, stage: Stage) {
+
+    internal fun setData(newSettings: SiGuiSetting, stage: Stage) {
         if (!::settings.isInitialized) {
             settings = newSettings
             rootStage = stage
@@ -98,7 +97,7 @@ class MainUIController : Initializable, AutoCloseable {
     }
 
     /**
-     * This is called when [setSettings] is called for the first time
+     * This is called when [setData] is called for the first time
      */
     private fun internalInitialize() {
 
@@ -350,8 +349,6 @@ class MainUIController : Initializable, AutoCloseable {
         }
 
     }
-
-    private fun FXMLLoader.loadAsParent() = this.load() as Parent
 
 
     private var downloadWindowsOpenTaskStarted = false
