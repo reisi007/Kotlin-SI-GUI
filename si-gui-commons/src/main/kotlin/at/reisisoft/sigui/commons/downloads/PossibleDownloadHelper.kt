@@ -253,7 +253,7 @@ object PossibleDownloadHelper {
             rootDocument.select("a[href]").let { aElements ->
                 Regex("(master|libreoffice.*?)/").let { firstLevelRegex ->
                     aElements.asSequence().map { it.attr("href") }.filter { firstLevelRegex.matches(it) }
-                        .sortedDescending().take(4)
+                        .sortedDescending().take(3)
                         .map { branchName ->
                             val level2URL = "${rootDocument.location()}$branchName"
                             branchName to parseHtmlDocument(level2URL)
