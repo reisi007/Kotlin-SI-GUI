@@ -642,6 +642,7 @@ class MainUIController : Initializable, AutoCloseable {
                                     settings.rootInstallationFolder withChild installName,
                                     os,
                                     SHORTCUT_CREATOR,
+                                    installName,
                                     settings.shortcutDir
                                 )
                             }

@@ -1,6 +1,5 @@
 package at.reisisoft.sigui.commons.installation
 
-import at.reisisoft.sigui.commons.desktop.NamingUtils
 import at.reisisoft.sigui.commons.desktop.installation.withChild
 import at.reisisoft.sigui.commons.downloads.DownloadType
 import java.nio.file.Files
@@ -14,12 +13,14 @@ object ParallelInstallation {
         installLocation: Path,
         downloadType: DownloadType,
         shortcutCreator: ShortcutCreator?,
+        shortcutName: String?,
         shortcutLocation: Path?
     ): Array<Path> = performInstallationFor(
         filepaths,
         installLocation,
         ParallelInstallationOS.fromDownloadType(downloadType),
         shortcutCreator,
+        shortcutName,
         shortcutLocation
     )
 
@@ -28,6 +29,7 @@ object ParallelInstallation {
         installLocation: Path,
         parallelinstalationType: ParallelInstallationOS,
         shortcutCreator: ShortcutCreator?,
+        shortcutName: String?,
         shortcutLocation: Path?
     ): Array<Path> {
         //If install location exists, and is LibreOfficeDownloadFileType.kt non-empty directory
@@ -82,23 +84,24 @@ object ParallelInstallation {
                     val addedFiles = mutableListOf(installLocation)
 
                     shortcutCreator?.let {
-                        (shortcutLocation
-                                ?: throw IllegalStateException("Shortcut location mus not be null if shortcut creator is non-null")).let { rootPath ->
-                            addedFiles.add(
-                                it(
-                                    binPath withChild sofficeFileName,
-                                    rootPath,
-                                    NamingUtils.extractName(Paths.get(filepaths.first()).fileName.toString())
-                                )
+                        shortcutLocation
+                                ?: throw IllegalStateException("Shortcut location mus not be null if shortcut creator is non-null")
+                        shortcutName ?: throw IllegalStateException("Shortcut name must not be null")
+                        addedFiles.add(
+                            it(
+                                binPath withChild sofficeFileName,
+                                shortcutLocation,
+                                shortcutName
                             )
-                        }
+                        )
                     }
+
                     addedFiles.toTypedArray()
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            throw e;
+            throw e
         }
     }
 }
