@@ -30,7 +30,9 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
     }
 
+
     private fun ensureArrayAdapter(spinner: Spinner): ArrayAdapter<DisplayAbleDownloadInformation> =
+        @Suppress(names = ["UNCHECKED_CAST"])
         (spinner.adapter as? ArrayAdapter<DisplayAbleDownloadInformation>) ?: kotlin.run {
             ArrayAdapter<DisplayAbleDownloadInformation>(
                 this,
