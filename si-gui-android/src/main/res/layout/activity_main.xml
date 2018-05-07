@@ -7,9 +7,12 @@
                                              tools:context=".ui.MainActivity">
 
     <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" tools:layout_editor_absoluteY="70dp"
-            tools:layout_editor_absoluteX="0dp">
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:id="@+id/scrollView2" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp">
 
         <LinearLayout
                 android:layout_width="match_parent"
