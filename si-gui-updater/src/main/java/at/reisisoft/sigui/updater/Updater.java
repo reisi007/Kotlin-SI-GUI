@@ -1,5 +1,7 @@
 package at.reisisoft.sigui.updater;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -7,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.AbstractMap;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -21,29 +24,32 @@ public class Updater {
     private static final Path scriptFilePath = siGuiInstallFolder.resolve("si-gui-desktop").resolve("bin").resolve("si-gui-desktop");
 
     public static void main(String[] args) {
+        int exitValue;
         try {
             final String installedeTag = loadCurrentVersionFromDisk();
             final Map.Entry<String, HttpURLConnection> online = loadLastOnlineVersion();
+
             if (installedeTag.equals(online.getKey())) {
                 //Same eTag -> no update needed
-                startSiGui();
+                exitValue = startSiGui().waitFor();
             } else {
-                downloadAndStartSiGui(online.getKey(), online.getValue());
+                exitValue = downloadAndStartSiGui(online.getKey(), online.getValue());
             }
         } catch (Exception e) {
             e.printStackTrace();
             throw new IllegalStateException("Better exception handling needed!");
         }
+        System.exit(exitValue);
     }
 
-    private static void downloadAndStartSiGui(String eTag, HttpURLConnection urlConnection) throws Exception {
+    private static int downloadAndStartSiGui(String eTag, HttpURLConnection urlConnection) throws Exception {
         final Path tmpFile = Paths.get(".", eTag + ".zip");
         Files.deleteIfExists(tmpFile);
-        //TODO show progress / Ask to dowenload
         try {
             try (final InputStream onlineIn = urlConnection.getInputStream();
                  final OutputStream fileOut = Files.newOutputStream(tmpFile, StandardOpenOption.CREATE_NEW)) {
                 final float length = urlConnection.getContentLength();
+                Map.Entry<JDialog, JProgressBar> progressWindow = openProgressWindow();
                 int totalRead = 0;
                 int read;
                 float realPercentage;
@@ -52,9 +58,11 @@ public class Updater {
                     totalRead += read;
                     fileOut.write(buffer, 0, read);
                     realPercentage = totalRead / length;
-                    String formatted = String.format("%.2f%%", realPercentage * 100);
+                    String formatted = String.format(Locale.US, "%.2f%%", realPercentage * 100);
+                    progressWindow.getValue().setValue(Math.round(realPercentage * 100 * 100));
                     System.out.println("Current progress: " + formatted);
                 }
+                progressWindow.getKey().setVisible(false);
             }
             //Replace the current installed version with the temp version
 
@@ -78,11 +86,12 @@ public class Updater {
             if (!isWindows && !canExec)
                 throw new IllegalStateException("Cannot make " + scriptFilePath + " executable...");
             //Start SI GUI
-            startSiGui();
+            Process sigui = startSiGui();
             //Save etag
             try (BufferedWriter writer = Files.newBufferedWriter(lastUpdatePath, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
                 writer.write(eTag);
             }
+            return sigui.waitFor();
         } finally {
             Files.deleteIfExists(tmpFile);
         }
@@ -129,12 +138,34 @@ public class Updater {
 
     private static final Path lastUpdatePath = Paths.get(".", "last_update.txt");
 
-    private static void startSiGui() throws Exception {
+    private static Process startSiGui() throws Exception {
         final File execFolder = scriptFilePath.getParent().toFile();
+        Process p;
         if (isWindows)
-            new ProcessBuilder("cmd.exe", "/c", "si-gui-desktop.bat").directory(execFolder).inheritIO().start();
+            p = new ProcessBuilder("cmd.exe", "/c", "si-gui-desktop.bat").directory(execFolder).inheritIO().start();
         else {
-            new ProcessBuilder("sh", scriptFilePath.toString()).directory(execFolder).inheritIO().start();
+            p = new ProcessBuilder("sh", scriptFilePath.toString()).directory(execFolder).inheritIO().start();
         }
+        return p;
+    }
+
+    private static Map.Entry<JDialog, JProgressBar> openProgressWindow() {
+        JPanel container = new JPanel();
+        container.setLayout(new BorderLayout());
+        container.setVisible(true);
+        JProgressBar progressBar = new JProgressBar(0, 10000);
+        progressBar.setSize(300, 100);
+
+        container.add(BorderLayout.CENTER, progressBar);
+
+        JDialog dialog = new JDialog((Window) null);
+        dialog.setTitle("Updating Kotlin SI-GUI...");
+
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setSize(300, 100);
+        dialog.add(container);
+        dialog.setLocationRelativeTo(null); //Center on screen
+        dialog.setVisible(true);
+        return new AbstractMap.SimpleImmutableEntry<>(dialog, progressBar);
     }
 }
