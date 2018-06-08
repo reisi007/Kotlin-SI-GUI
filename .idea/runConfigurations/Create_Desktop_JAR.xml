@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Create Desktop ZIP" type="GradleRunConfiguration" factoryName="Gradle" singleton="true">
+  <configuration default="false" name="Create Desktop JAR" type="GradleRunConfiguration" factoryName="Gradle" singleton="true">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/si-gui-desktop" />
@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="distZip" />
+          <option value="shadowJar" />
         </list>
       </option>
       <option name="vmOptions" value="" />

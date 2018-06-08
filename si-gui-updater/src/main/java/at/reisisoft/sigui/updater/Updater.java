@@ -6,14 +6,15 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.AbstractMap;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class Updater {
     private static boolean isWindows = System.getProperty("os.name").toLowerCase().contains("wind");
@@ -21,7 +22,7 @@ public class Updater {
     private static final String updaterUrl = "https://tdf.io/kotlinsiguiupdaterendpoint";
     private static final Path siGuiInstallFolder = Paths.get(".", "kotlin-si-gui").toAbsolutePath().normalize();
     private static final String settingFilename = "si-gui.settings.json";
-    private static final Path scriptFilePath = siGuiInstallFolder.resolve("si-gui-desktop").resolve("bin").resolve("si-gui-desktop");
+    private static final Path scriptFilePath = siGuiInstallFolder.resolve("si-gui-desktop.jar");
 
     public static void main(String[] args) {
         int exitValue;
@@ -43,7 +44,7 @@ public class Updater {
     }
 
     private static int downloadAndStartSiGui(String eTag, HttpURLConnection urlConnection) throws Exception {
-        final Path tmpFile = Paths.get(".", eTag + ".zip");
+        final Path tmpFile = Paths.get(".", eTag + ".jar");
         Files.deleteIfExists(tmpFile);
         try {
             try (final InputStream onlineIn = urlConnection.getInputStream();
@@ -81,7 +82,9 @@ public class Updater {
                 }
             });
             //Extract new version
-            extractZip(tmpFile, siGuiInstallFolder);
+            Files.deleteIfExists(scriptFilePath);
+            Files.move(tmpFile, scriptFilePath);
+
             boolean canExec = scriptFilePath.toFile().setExecutable(true, false);
             if (!isWindows && !canExec)
                 throw new IllegalStateException("Cannot make " + scriptFilePath + " executable...");
@@ -97,19 +100,6 @@ public class Updater {
         }
     }
 
-    private static void extractZip(final Path zipFile, final Path out) throws IOException {
-        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipFile, StandardOpenOption.READ))) {
-            ZipEntry curEntry;
-            Path outFile;
-            while ((curEntry = zis.getNextEntry()) != null) {
-                if (curEntry.isDirectory())
-                    continue;
-                outFile = out.resolve(curEntry.getName());
-                Files.createDirectories(outFile.getParent());
-                Files.copy(zis, outFile, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-    }
 
     private static String loadCurrentVersionFromDisk() {
         try {
@@ -140,13 +130,7 @@ public class Updater {
 
     private static Process startSiGui() throws Exception {
         final File execFolder = scriptFilePath.getParent().toFile();
-        Process p;
-        if (isWindows)
-            p = new ProcessBuilder("cmd.exe", "/c", "si-gui-desktop.bat").directory(execFolder).inheritIO().start();
-        else {
-            p = new ProcessBuilder("sh", scriptFilePath.toString()).directory(execFolder).inheritIO().start();
-        }
-        return p;
+        return new ProcessBuilder("java", "-jar", "si-gui-desktop.jar").directory(execFolder).inheritIO().start();
     }
 
     private static Map.Entry<JDialog, JProgressBar> openProgressWindow() {
